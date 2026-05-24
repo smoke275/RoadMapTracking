@@ -474,9 +474,9 @@ class Window(QMainWindow):
     # ------------------------------------------------------------------
     # Main simulation entry point (runs on background thread)
     # ------------------------------------------------------------------
-    def run(self, poly):
+    def run(self, poly, force_recompute: bool = False):
         # ---- Build KER pipeline (one-time) ---------------------------
-        data = ker_pipeline.build(poly, renderer=self)
+        data = ker_pipeline.build(poly, renderer=self, force_recompute=force_recompute)
 
         # ---- Expose to interactive handlers --------------------------
         evader_pt = Point(0, 0)

@@ -12,6 +12,7 @@ Controls:
   Esc              — quit
 """
 import sys
+import argparse
 import threading
 
 from PyQt5.QtWidgets import QApplication
@@ -21,14 +22,24 @@ from window import Window
 
 
 def startup():
+    parser = argparse.ArgumentParser(description='KER pursuit-evasion simulation')
+    parser.add_argument('-r', '--recompute', action='store_true',
+                        help='Ignore cached results and recompute from scratch')
+    args, qt_args = parser.parse_known_args()
+    if args.recompute:
+        print('[INFO] --recompute flag set: ignoring cache.')
+
     poly = draw_polygon()
     if poly is None:
         print('[ERROR] No polygon drawn — exiting.')
         return
 
-    app    = QApplication(sys.argv)
+    app    = QApplication([sys.argv[0]] + qt_args)
     window = Window()
-    thread = threading.Thread(target=window.run, args=(poly,), daemon=True)
+    thread = threading.Thread(
+        target=window.run, args=(poly,),
+        kwargs={'force_recompute': args.recompute},
+        daemon=True)
     thread.start()
     sys.exit(app.exec())
 

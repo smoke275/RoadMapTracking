@@ -21,7 +21,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from scipy.sparse import find as sp_find
 from scipy.sparse.csgraph import csgraph_from_dense, floyd_warshall
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, Point, Polygon as ShapelyPolygon
 
 from cache import load_cache, poly_fingerprint, save_cache
 from config import EPSILON
@@ -220,7 +220,7 @@ def compute_corner_asso(poly, corners, env) -> dict:
 # ---------------------------------------------------------------------------
 # One-time pipeline build
 # ---------------------------------------------------------------------------
-def build(poly, renderer=None) -> SimulationData:
+def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
     """
     Run the full KER pipeline and return a SimulationData object.
 
@@ -253,11 +253,11 @@ def build(poly, renderer=None) -> SimulationData:
     env   = vis.Environment([walls])
     env.PRINTING_DEBUG_DATA = False
 
-    shapely_env = Polygon([(p.x(), p.y()) for p in poly])
+    shapely_env = ShapelyPolygon([(p.x(), p.y()) for p in poly])
 
     # ---- Try cache -------------------------------------------------------
     fingerprint        = poly_fingerprint(poly)
-    _cached, _cached_geo = load_cache(fingerprint)
+    _cached, _cached_geo = (None, None) if force_recompute else load_cache(fingerprint)
 
     if _cached is not None:
         corners             = list(_cached['corners'])
@@ -544,6 +544,34 @@ def build(poly, renderer=None) -> SimulationData:
             _show()
             time.sleep(1.5)
 
+        # ---- Sanity check: union of guard vis-polys covers env ----------
+        _vis_union = None
+        for pt_i in chosed_set:
+            ker_pt = KER[pt_i]
+            if not shapely_env.buffer(1).contains(Point(ker_pt.x(), ker_pt.y())):
+                continue
+            try:
+                evis = vis.Visibility_Polygon(ker_pt, env, EPSILON)
+                evx, evy = poly_to_points(evis)
+                _vp = ShapelyPolygon(list(zip(evx, evy)))
+                _vis_union = _vp if _vis_union is None else _vis_union.union(_vp)
+            except Exception as _e:
+                print(f'[WARNING] Sanity: vis poly for KER[{pt_i}] failed: {_e}')
+        if _vis_union is None:
+            print('[WARNING] Sanity check: no visibility polygons computed.')
+        else:
+            _uncov = shapely_env.difference(_vis_union).area
+            _total = shapely_env.area
+            _pct   = 100.0 * (1.0 - _uncov / _total) if _total > 0 else 0.0
+            if _uncov < 1e-3 * _total:
+                print(f'[OK] Coverage sanity check passed: guard set covers '
+                      f'{_pct:.4f}% of the environment '
+                      f'(uncovered area {_uncov:.4f} sq units).')
+            else:
+                print(f'[WARNING] Coverage gap: {_uncov:.4f} sq units uncovered '
+                      f'({100.0 - _pct:.4f}% of total area {_total:.2f}).')
+        # -----------------------------------------------------------------
+
         # ---- Patrol path ------------------------------------------------
         path_lines = []
         for it in range(len(chosed_set)):
@@ -585,7 +613,7 @@ def build(poly, renderer=None) -> SimulationData:
             sol      = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
             visi_pol = sol[0]
 
-            seg_poly      = Polygon([(visi_pol[k][0], visi_pol[k][1]) for k in range(len(visi_pol))])
+            seg_poly      = ShapelyPolygon([(visi_pol[k][0], visi_pol[k][1]) for k in range(len(visi_pol))])
             seg_poly_buff = seg_poly.buffer(1)
 
             intersection_points[j] = []
