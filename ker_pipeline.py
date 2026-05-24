@@ -156,7 +156,7 @@ class SimulationData:
     poly:                list          # cleaned list of vis.Point
     x:                   list          # poly x-coords for drawing
     y:                   list          # poly y-coords for drawing
-    shapely_env:         Polygon
+    shapely_env:         ShapelyPolygon
     corners:             list          # concave corner indices
     asso:                dict          # corner_idx → clipped vis polygon
     env:                 vis.Environment
