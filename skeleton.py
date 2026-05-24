@@ -123,3 +123,48 @@ def pick_destination(nodes, adj, src_idx, min_hops: int = 8) -> int:
     if not far:
         far = [n for n in visited if n != src_idx] or [src_idx]
     return random.choice(far)
+
+
+def build_prm(shapely_poly, n_samples: int = 200, k_neighbors: int = 10):
+    """
+    Build a Probabilistic Roadmap inside *shapely_poly*.
+
+    Samples *n_samples* random interior points, then for each point connects
+    up to *k_neighbors* nearest neighbours whose straight-line segment lies
+    entirely inside the polygon (LOS check via shapely.contains).
+
+    Returns (nodes, adj) with the same structure as build_voronoi_skeleton.
+    """
+    from shapely.geometry import LineString, Point as ShapelyPoint
+
+    minx, miny, maxx, maxy = shapely_poly.bounds
+    nodes: list = []
+    for _ in range(n_samples * 200):
+        if len(nodes) >= n_samples:
+            break
+        x = random.uniform(minx, maxx)
+        y = random.uniform(miny, maxy)
+        if shapely_poly.contains(ShapelyPoint(x, y)):
+            nodes.append((x, y))
+
+    n   = len(nodes)
+    adj: dict[int, dict[int, float]] = {i: {} for i in range(n)}
+
+    for i in range(n):
+        xi, yi  = nodes[i]
+        by_dist = sorted(
+            (j for j in range(n) if j != i),
+            key=lambda j: math.hypot(nodes[j][0] - xi, nodes[j][1] - yi),
+        )
+        connected = 0
+        for j in by_dist:
+            if connected >= k_neighbors:
+                break
+            xj, yj = nodes[j]
+            if shapely_poly.contains(LineString([(xi, yi), (xj, yj)])):
+                d = math.hypot(xj - xi, yj - yi)
+                adj[i][j] = d
+                adj[j][i] = d
+                connected += 1
+
+    return nodes, adj

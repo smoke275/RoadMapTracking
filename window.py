@@ -8,6 +8,7 @@ import os
 import random
 import time
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pyclipper
@@ -17,15 +18,17 @@ from PyQt5.QtGui import (QPainter, QBrush, QPen, QPolygon,
                           QColor, QFont, QTransform, QRadialGradient)
 from PyQt5.QtWidgets import QMainWindow
 from enum import Enum, auto
-from shapely.geometry import Point
+from shapely.geometry import LineString, Point
 
-from config import BOUNDARY_X, BOUNDARY_Y, POINT_RADIUS, WINDOW_SIZE
+from config import BOUNDARY_X, BOUNDARY_Y, POINT_RADIUS, WINDOW_SIZE, EPSILON
 from geometry import interpolate_point
 from graph import dijkstra
 import ker_pipeline
+import visilibity as vis
 from skeleton import nearest_node as _skeleton_nearest_node
 from skeleton import skeleton_path as _skeleton_path
 from skeleton import pick_destination as _skeleton_pick_destination
+from skeleton import build_prm as _build_prm
 
 # ---------------------------------------------------------------------------
 # Pursuer debug log
@@ -97,6 +100,8 @@ class Window(QMainWindow):
 
         self._draw_queue: list = []
         self._main_stack: list = []
+        self._running: bool = True
+        self._data   = None   # set in run() after build()
 
         # Interactive state — defaults until run() populates them
         self.poly                    = None
@@ -119,11 +124,20 @@ class Window(QMainWindow):
         self._skel_path: list   = []
         self._skel_path_pos: float = 0.0
         self._skel_seg_idx: int = 0
-        self._evader_speed: float = 3.0
+        self._evader_speed: float = 30.0   # px / second
 
         # Autonomous observer state
         self._auto_observer_pos  = None
-        self._pursuer_speed: float = 2.0
+        self._pursuer_speed: float = 20.0  # px / second
+
+        # PRM for free pursuer navigation
+        self._prm_nodes: list        = []
+        self._prm_adj: dict          = {}
+        self._prm_path: list         = []
+        self._prm_seg_idx: int       = 0
+        self._prm_seg_pos: float     = 0.0
+        self._prm_last_guard         = None
+        self._show_prm: bool         = False
 
         # Roadmap pursuer state
         self._roadmap_pursuer: bool   = False
@@ -162,7 +176,14 @@ class Window(QMainWindow):
             self._draw_queue = []
         finally:
             _sem.release()
-        self.update()
+        try:
+            self.update()
+        except RuntimeError:
+            pass  # window already destroyed
+
+    def closeEvent(self, event):
+        self._running = False
+        super().closeEvent(event)
 
     # ------------------------------------------------------------------
     # Convenience draw helpers
@@ -335,6 +356,30 @@ class Window(QMainWindow):
                 painter.restore()
 
     # ------------------------------------------------------------------
+    # Pick the patrol-graph node closest to (ex, ey) with LOS
+    # ------------------------------------------------------------------
+    def _best_los_spawn(self, ex: float, ey: float):
+        """Return [x, y] of the patrol-graph node that has line-of-sight to
+        (ex, ey) and is closest.  Falls back to the nearest node if none
+        has clear LOS."""
+        if self._data is None:
+            return [float(self.draggable_point_observer.x()),
+                    float(self.draggable_point_observer.y())]
+        best, best_d   = None, float('inf')
+        fallback, fb_d = None, float('inf')
+        for node in self._data.graph:
+            nx, ny = node
+            d = math.hypot(nx - ex, ny - ey)
+            if d < fb_d:
+                fb_d, fallback = d, [nx, ny]
+            seg = LineString([(nx, ny), (ex, ey)])
+            if self._data.shapely_env.contains(seg) and d < best_d:
+                best_d, best = d, [nx, ny]
+        result = best if best is not None else fallback
+        return result or [float(self.draggable_point_observer.x()),
+                          float(self.draggable_point_observer.y())]
+
+    # ------------------------------------------------------------------
     # Keyboard / Mouse
     # ------------------------------------------------------------------
     def keyPressEvent(self, e: QtGui.QKeyEvent):
@@ -350,41 +395,46 @@ class Window(QMainWindow):
                 self._skel_path     = _skeleton_path(self._skel_nodes, self._skel_adj, src, dst)
                 self._skel_seg_idx  = 0
                 self._skel_path_pos = 0.0
-                self._auto_observer_pos = [
-                    float(self.draggable_point_observer.x()),
-                    float(self.draggable_point_observer.y()),
-                ]
-                self._roadmap_obs_pos    = [
-                    float(self.draggable_point_observer.x()),
-                    float(self.draggable_point_observer.y()),
-                ]
+                spawn = self._best_los_spawn(float(ex), float(ey))
+                self._auto_observer_pos  = list(spawn)
+                self._roadmap_obs_pos    = list(spawn)
                 self._roadmap_base_path  = []
                 self._roadmap_base_idx   = 0
                 self._roadmap_guard_pos  = None
                 self._roadmap_edge_behind = None
                 self._roadmap_direct     = False
+                self._prm_path           = []
+                self._prm_seg_idx        = 0
+                self._prm_seg_pos        = 0.0
+                self._prm_last_guard     = None
             if not self.auto_evader:
-                self._auto_observer_pos = None
-                self._roadmap_obs_pos   = None
+                self._auto_observer_pos  = None
+                self._roadmap_obs_pos    = None
+                self._prm_last_guard     = None
+        elif e.key() == Qt.Key_G:
+            self._show_prm = not self._show_prm
+            print(f'[PRM-GRAPH] {"ON" if self._show_prm else "OFF"}')
         elif e.key() == Qt.Key_P:
             self._roadmap_pursuer = not self._roadmap_pursuer
             print(f'[ROADMAP-PURSUER] {"ON" if self._roadmap_pursuer else "OFF"}')
             if self.auto_evader:
                 if self._roadmap_pursuer and self._roadmap_obs_pos is None:
-                    self._roadmap_obs_pos = [
-                        float(self.draggable_point_observer.x()),
-                        float(self.draggable_point_observer.y()),
-                    ]
+                    ex, ey = self.draggable_point_evader.x(), self.draggable_point_evader.y()
+                    spawn = self._best_los_spawn(float(ex), float(ey))
+                    self._roadmap_obs_pos    = list(spawn)
                     self._roadmap_base_path  = []
                     self._roadmap_base_idx   = 0
                     self._roadmap_guard_pos  = None
                     self._roadmap_edge_behind = None
                     self._roadmap_direct     = False
                 elif not self._roadmap_pursuer and self._auto_observer_pos is None:
-                    self._auto_observer_pos = [
-                        float(self.draggable_point_observer.x()),
-                        float(self.draggable_point_observer.y()),
-                    ]
+                    ex, ey = self.draggable_point_evader.x(), self.draggable_point_evader.y()
+                    spawn = self._best_los_spawn(float(ex), float(ey))
+                    self._auto_observer_pos  = list(spawn)
+                    self._prm_path           = []
+                    self._prm_seg_idx        = 0
+                    self._prm_seg_pos        = 0.0
+                    self._prm_last_guard     = None
         super().keyPressEvent(e)
 
     def _map_mouse(self, event):
@@ -477,6 +527,7 @@ class Window(QMainWindow):
     def run(self, poly, force_recompute: bool = False):
         # ---- Build KER pipeline (one-time) ---------------------------
         data = ker_pipeline.build(poly, renderer=self, force_recompute=force_recompute)
+        self._data = data   # expose to keyPressEvent
 
         # ---- Expose to interactive handlers --------------------------
         evader_pt = Point(0, 0)
@@ -496,8 +547,25 @@ class Window(QMainWindow):
         self._skel_adj                = data.skel_adj
         self._skel_edges              = data.skel_edges
 
+        # ---- Build PRM for free pursuer ----------------------------------
+        print('[PRM] Building free-pursuer roadmap…')
+        self._prm_nodes, self._prm_adj = _build_prm(data.shapely_env, n_samples=400)
+        print(f'[PRM] {len(self._prm_nodes)} nodes')
+
+        # ---- Async compute pool (double-buffer: render never blocks) ----
+        _compute_pool   = ThreadPoolExecutor(max_workers=1, thread_name_prefix='ker_compute')
+        _compute_future = None
+        _last_fc        = None
+        _last_tick: float = time.monotonic()
+
         # ---- Interactive loop ----------------------------------------
         while True:
+            if not self._running:
+                break
+            _now = time.monotonic()
+            dt   = min(_now - _last_tick, 0.1)   # cap at 100 ms to handle pauses
+            _last_tick = _now
+
             ex_ = self.draggable_point_evader.x()
             ey_ = self.draggable_point_evader.y()
             ox_ = self.draggable_point_observer.x()
@@ -532,6 +600,19 @@ class Window(QMainWindow):
                 self._d_glow_line(p.coords[0][0], p.coords[0][1],
                                   p.coords[1][0], p.coords[1][1], C_PATH, width=3)
 
+            # ---- PRM overlay (toggle with [G]) ------------------------
+            if self._show_prm and self._prm_nodes:
+                C_PRM_EDGE = QColor(80, 180, 255, 55)
+                C_PRM_NODE = QColor(80, 180, 255, 130)
+                for i in range(len(self._prm_nodes)):
+                    for j in self._prm_adj[i]:
+                        if j > i:
+                            x0, y0 = self._prm_nodes[i]
+                            x1, y1 = self._prm_nodes[j]
+                            self._d_line(x0, y0, x1, y1, C_PRM_EDGE, width=1)
+                for (nx, ny) in self._prm_nodes:
+                    self._d_dot(nx, ny, 2, C_PRM_NODE)
+
             # ---- Intersection points for active corner -----------------
             for pt in list(data.intersection_points[act]):
                 self._d_dot(pt.x, pt.y, 5, C_INTER_PT)
@@ -552,8 +633,24 @@ class Window(QMainWindow):
                          cr + 3, QColor(0, 180, 200, 80), width=6)
             self._d_dot(data.poly[act].x(), data.poly[act].y(), cr, C_CORNER)
 
-            # ---- KER frame computation (pure, no side effects) ---------
-            fc = ker_pipeline.compute_frame(float(ex_), float(ey_), ox_comp, oy_comp, data)
+            # ---- KER frame computation (async double-buffer) ------------
+            # If the background worker finished, harvest the result.
+            if _compute_future is not None and _compute_future.done():
+                try:
+                    _last_fc = _compute_future.result()
+                except Exception:
+                    pass
+                _compute_future = None
+            # Submit a new computation only when the worker is idle.
+            if _compute_future is None:
+                _compute_future = _compute_pool.submit(
+                    ker_pipeline.compute_frame,
+                    float(ex_), float(ey_), ox_comp, oy_comp, data)
+            # First frame: block once so we always have a valid fc.
+            if _last_fc is None:
+                _last_fc = _compute_future.result()
+                _compute_future = None
+            fc = _last_fc
 
             # ---- Draw optimal edge -------------------------------------
             v2x, v2y = data.vertices[fc.opt_edge_v1].x, data.vertices[fc.opt_edge_v1].y
@@ -622,10 +719,14 @@ class Window(QMainWindow):
                 self._d_text(-490, -410, f'[P] pursuer: {pursuer_label}', size=11)
 
                 # Step evader along skeleton path
-                speed = self._evader_speed
+                speed = self._evader_speed * dt
                 while speed > 0 and self._skel_path:
                     if self._skel_seg_idx >= len(self._skel_path) - 1:
-                        cur_node = self._skel_path[-1]
+                        # Snap to evader's actual position so the new path
+                        # genuinely starts from where the evader currently is.
+                        ev_x = float(self.draggable_point_evader.x())
+                        ev_y = float(self.draggable_point_evader.y())
+                        cur_node = _skeleton_nearest_node(self._skel_nodes, ev_x, ev_y)
                         dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node)
                         new_path = _skeleton_path(self._skel_nodes, self._skel_adj, cur_node, dst)
                         if new_path and len(new_path) > 1:
@@ -633,6 +734,9 @@ class Window(QMainWindow):
                             self._skel_seg_idx  = 0
                             self._skel_path_pos = 0.0
                         else:
+                            # Clear so the outer guard can re-initialise next frame
+                            self._skel_path    = []
+                            self._skel_seg_idx = 0
                             break
 
                     i0 = self._skel_path[self._skel_seg_idx]
@@ -673,21 +777,72 @@ class Window(QMainWindow):
 
                 # Step roadmap pursuer
                 if self._roadmap_pursuer and self._roadmap_obs_pos is not None:
-                    self._step_roadmap_pursuer(guard, data)
+                    self._step_roadmap_pursuer(guard, data, dt)
 
-                # Step free (autonomous) observer
+                # Step free (autonomous) observer via PRM
                 elif self._auto_observer_pos is not None:
-                    pspeed = self._pursuer_speed
+                    pspeed = self._pursuer_speed * dt
                     gx, gy = guard.x, guard.y
                     px, py = self._auto_observer_pos
-                    ddx, ddy = gx - px, gy - py
-                    dist_to_guard = math.hypot(ddx, ddy)
-                    if dist_to_guard > pspeed:
-                        px += (ddx / dist_to_guard) * pspeed
-                        py += (ddy / dist_to_guard) * pspeed
+
+                    if self._prm_nodes:
+                        # Replan when guard moves >15 px or path is exhausted
+                        guard_moved = (
+                            self._prm_last_guard is None
+                            or math.hypot(gx - self._prm_last_guard[0],
+                                          gy - self._prm_last_guard[1]) > 15
+                            or not self._prm_path
+                            or self._prm_seg_idx >= len(self._prm_path) - 1
+                        )
+                        if guard_moved:
+                            src = _skeleton_nearest_node(self._prm_nodes, px, py)
+                            dst = _skeleton_nearest_node(self._prm_nodes, gx, gy)
+                            self._prm_path      = _skeleton_path(
+                                self._prm_nodes, self._prm_adj, src, dst)
+                            self._prm_seg_idx   = 0
+                            self._prm_last_guard = [gx, gy]
+
+                        # Waypoint following — always move from actual (px,py) toward
+                        # the next node so replanning never causes a position jump.
+                        rem = pspeed
+                        while (rem > 0 and self._prm_path
+                               and self._prm_seg_idx < len(self._prm_path) - 1):
+                            wx, wy = self._prm_nodes[
+                                self._prm_path[self._prm_seg_idx + 1]]
+                            dx, dy = wx - px, wy - py
+                            dist   = math.hypot(dx, dy)
+                            if dist < 1e-6 or rem >= dist:
+                                rem -= dist
+                                px, py = wx, wy
+                                self._prm_seg_idx += 1
+                            else:
+                                px += (dx / dist) * rem
+                                py += (dy / dist) * rem
+                                rem = 0
+                        if math.hypot(gx - px, gy - py) <= pspeed:
+                            px, py = gx, gy
                     else:
-                        px, py = gx, gy
+                        # PRM not yet built — straight-line fallback
+                        ddx, ddy = gx - px, gy - py
+                        dist_to_guard = math.hypot(ddx, ddy)
+                        if dist_to_guard > pspeed:
+                            px += (ddx / dist_to_guard) * pspeed
+                            py += (ddy / dist_to_guard) * pspeed
+                        else:
+                            px, py = gx, gy
+
                     self._auto_observer_pos = [px, py]
+
+                    # Visibility polygon overlay
+                    try:
+                        _vp = vis.Visibility_Polygon(
+                            vis.Point(px, py), data.env, EPSILON)
+                        _vx = [_vp[i].x() for i in range(_vp.n())]
+                        _vy = [_vp[i].y() for i in range(_vp.n())]
+                        self._d_filled_polygon(_vx, _vy, QColor(255, 220, 0, 35))
+                        self._d_polygon(_vx, _vy, QColor(255, 220, 0, 100), width=2)
+                    except Exception:
+                        pass
 
                     C_AUTO_OBS = QColor(255, 220, 0)
                     self._d_ring(px, py, POINT_RADIUS + 4, QColor(255, 220, 0, 80), width=5)
@@ -701,14 +856,17 @@ class Window(QMainWindow):
                 self._d_text(-490, -430, '[A] auto evader off', size=11)
                 pursuer_label = 'ROADMAP' if self._roadmap_pursuer else 'FREE'
                 self._d_text(-490, -410, f'[P] pursuer: {pursuer_label}', size=11)
+            prm_label = 'ON' if self._show_prm else 'OFF'
+            self._d_text(-490, -390, f'[G] PRM graph: {prm_label}', size=11)
 
             self.execute()
+            time.sleep(0.016)   # cap sim-thread at ~60 fps; frees CPU for compute worker
 
     # ------------------------------------------------------------------
     # Roadmap pursuer step — all self._roadmap_* state mutations
     # ------------------------------------------------------------------
-    def _step_roadmap_pursuer(self, guard, data):
-        pspeed = self._pursuer_speed
+    def _step_roadmap_pursuer(self, guard, data, dt: float = 0.016):
+        pspeed = self._pursuer_speed * dt
         gx, gy = guard.x, guard.y
         px, py = self._roadmap_obs_pos
         self._dbg_frame_count += 1
@@ -839,6 +997,16 @@ class Window(QMainWindow):
 
         # Sync green dot position
         self.draggable_point_observer = QPoint(int(px), int(py))
+
+        # Visibility polygon overlay for roadmap pursuer
+        try:
+            _vp = vis.Visibility_Polygon(vis.Point(px, py), data.env, EPSILON)
+            _vx = [_vp[i].x() for i in range(_vp.n())]
+            _vy = [_vp[i].y() for i in range(_vp.n())]
+            self._d_filled_polygon(_vx, _vy, QColor(255, 220, 0, 35))
+            self._d_polygon(_vx, _vy, QColor(255, 220, 0, 100), width=2)
+        except Exception:
+            pass
 
         # Draw committed base-node path
         C_RM_PATH  = QColor(255, 220, 0, 160)
