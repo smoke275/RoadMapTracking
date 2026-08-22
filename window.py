@@ -138,6 +138,8 @@ class Window(QMainWindow):
         self._prm_seg_pos: float     = 0.0
         self._prm_last_guard         = None
         self._show_prm: bool         = False
+        self._gating_enabled: bool   = False
+        self._queued_dest: int | None = None  # skeleton node index queued by click
 
         # Roadmap pursuer state
         self._roadmap_pursuer: bool   = False
@@ -414,6 +416,10 @@ class Window(QMainWindow):
         elif e.key() == Qt.Key_G:
             self._show_prm = not self._show_prm
             print(f'[PRM-GRAPH] {"ON" if self._show_prm else "OFF"}')
+        elif e.key() == Qt.Key_V:
+            self._gating_enabled = not self._gating_enabled
+            ker_pipeline.set_gating_enabled(self._gating_enabled)
+            print(f'[VIS-GATING] {"ON" if self._gating_enabled else "OFF"}')
         elif e.key() == Qt.Key_P:
             self._roadmap_pursuer = not self._roadmap_pursuer
             print(f'[ROADMAP-PURSUER] {"ON" if self._roadmap_pursuer else "OFF"}')
@@ -458,6 +464,12 @@ class Window(QMainWindow):
             self.dragging_observer = True
         elif (tp - cp).manhattanLength() <= r:
             self.dragging_corner = True
+        elif self.auto_evader and self._skel_nodes:
+            # Queue the clicked skeleton node as the next evader destination
+            node_idx = _skeleton_nearest_node(self._skel_nodes, mx, my)
+            self._queued_dest = node_idx
+            nx, ny = self._skel_nodes[node_idx]
+            print(f'[EVADER-QUEUE] node {node_idx} at ({nx:.1f}, {ny:.1f})')
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -549,7 +561,7 @@ class Window(QMainWindow):
 
         # ---- Build PRM for free pursuer ----------------------------------
         print('[PRM] Building free-pursuer roadmap…')
-        self._prm_nodes, self._prm_adj = _build_prm(data.shapely_env, n_samples=400)
+        self._prm_nodes, self._prm_adj = _build_prm(data.shapely_env, n_samples=800)
         print(f'[PRM] {len(self._prm_nodes)} nodes')
 
         # ---- Async compute pool (double-buffer: render never blocks) ----
@@ -727,8 +739,16 @@ class Window(QMainWindow):
                         ev_x = float(self.draggable_point_evader.x())
                         ev_y = float(self.draggable_point_evader.y())
                         cur_node = _skeleton_nearest_node(self._skel_nodes, ev_x, ev_y)
-                        dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node)
+                        if self._queued_dest is not None:
+                            dst = self._queued_dest
+                            self._queued_dest = None
+                        else:
+                            dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node)
                         new_path = _skeleton_path(self._skel_nodes, self._skel_adj, cur_node, dst)
+                        # Fallback: queued dest was trivial (same node) — auto-pick instead
+                        if not new_path or len(new_path) <= 1:
+                            dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node)
+                            new_path = _skeleton_path(self._skel_nodes, self._skel_adj, cur_node, dst)
                         if new_path and len(new_path) > 1:
                             self._skel_path     = new_path
                             self._skel_seg_idx  = 0
@@ -774,6 +794,11 @@ class Window(QMainWindow):
                     dst_n   = self._skel_path[-1]
                     dx_, dy_ = self._skel_nodes[dst_n]
                     self._d_ring(dx_, dy_, 12, QColor(255, 180, 0, 180), width=2)
+                if self._queued_dest is not None:
+                    qx, qy = self._skel_nodes[self._queued_dest]
+                    self._d_ring(qx, qy, 16, QColor(0, 230, 180, 220), width=2)
+                    self._d_ring(qx, qy,  9, QColor(0, 230, 180, 120), width=1)
+                    self._d_text(int(qx) + 14, int(qy), 'queued', size=9)
 
                 # Step roadmap pursuer
                 if self._roadmap_pursuer and self._roadmap_obs_pos is not None:
@@ -858,6 +883,8 @@ class Window(QMainWindow):
                 self._d_text(-490, -410, f'[P] pursuer: {pursuer_label}', size=11)
             prm_label = 'ON' if self._show_prm else 'OFF'
             self._d_text(-490, -390, f'[G] PRM graph: {prm_label}', size=11)
+            gating_label = 'ON' if self._gating_enabled else 'OFF'
+            self._d_text(-490, -370, f'[V] vis-gating: {gating_label}', size=11)
 
             self.execute()
             time.sleep(0.016)   # cap sim-thread at ~60 fps; frees CPU for compute worker

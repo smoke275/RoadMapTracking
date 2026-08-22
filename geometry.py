@@ -34,7 +34,7 @@ def suppress_output():
 def find_slope_and_intercept(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    if x2 == x1:
+    if abs(x2 - x1) < 1e-9:
         return float('inf'), x1
     m = (y2 - y1) / (x2 - x1)
     return m, y1 - m * x1
@@ -43,9 +43,9 @@ def find_slope_and_intercept(p1, p2):
 def interpolate_point(a: Point, b: Point, s: float) -> Point:
     """Return the point s units along the segment a→b."""
     d = a.distance(b)
-    if d == 0:
+    if d < 1e-12:
         return a
-    t = s / d
+    t = max(0.0, min(1.0, s / d))   # clamp: FP rounding must not overshoot
     return Point(a.x + t * (b.x - a.x), a.y + t * (b.y - a.y))
 
 
@@ -80,11 +80,13 @@ def minimum_distance(pt_a: vis.Point, pt_b: vis.Point, pt_e: vis.Point) -> float
     AB = np.array([pt_b.x() - pt_a.x(), pt_b.y() - pt_a.y()])
     AE = np.array([pt_e.x() - pt_a.x(), pt_e.y() - pt_a.y()])
     BE = np.array([pt_e.x() - pt_b.x(), pt_e.y() - pt_b.y()])
+    mod = np.linalg.norm(AB)
+    if mod < 1e-12:   # degenerate segment: return distance to endpoint
+        return math.hypot(pt_e.x() - pt_a.x(), pt_e.y() - pt_a.y())
     if np.dot(AB, BE) > 0:
         return math.hypot(pt_e.x() - pt_b.x(), pt_e.y() - pt_b.y())
     if np.dot(AB, AE) < 0:
         return math.hypot(pt_e.x() - pt_a.x(), pt_e.y() - pt_a.y())
-    mod = np.linalg.norm(AB)
     return abs(AB[0] * AE[1] - AB[1] * AE[0]) / mod
 
 
@@ -110,7 +112,8 @@ def find_intersection(polygon, point: Point, direction):
         if inter.geom_type == 'MultiLineString':
             return inter.geoms[0].coords[0], inter
         if inter.geom_type == 'GeometryCollection':
-            return inter.geoms[1].coords[0], inter
+            pts = [g for g in inter.geoms if g.geom_type == 'Point']
+            return (pts[0].coords[0] if pts else None), inter
         return None, inter
 
     fwd = LineString([point, (point.x + direction[0] * far, point.y + direction[1] * far)])

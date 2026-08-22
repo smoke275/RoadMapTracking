@@ -109,8 +109,11 @@ def skeleton_path(nodes, adj, src_idx, dst_idx) -> list:
     return path if path[0] == src_idx else []
 
 
-def pick_destination(nodes, adj, src_idx, min_hops: int = 8) -> int:
-    """BFS from src_idx; pick a random node at least min_hops away."""
+def pick_destination(nodes, adj, src_idx, min_hops: int = 8,
+                     top_frac: float = 0.25) -> int:
+    """BFS from src_idx; pick a random node from the spatially farthest
+    *top_frac* fraction of nodes that are at least *min_hops* away.
+    This prevents the evader from repeatedly heading to the same cluster."""
     visited = {src_idx: 0}
     q = deque([src_idx])
     while q:
@@ -122,7 +125,12 @@ def pick_destination(nodes, adj, src_idx, min_hops: int = 8) -> int:
     far = [n for n, hops in visited.items() if hops >= min_hops]
     if not far:
         far = [n for n in visited if n != src_idx] or [src_idx]
-    return random.choice(far)
+    # Sort by Euclidean distance descending; sample from the far end only
+    sx, sy = nodes[src_idx]
+    far.sort(key=lambda n: math.hypot(nodes[n][0] - sx, nodes[n][1] - sy),
+             reverse=True)
+    cutoff = max(1, int(len(far) * top_frac))
+    return random.choice(far[:cutoff])
 
 
 def build_prm(shapely_poly, n_samples: int = 200, k_neighbors: int = 10):
