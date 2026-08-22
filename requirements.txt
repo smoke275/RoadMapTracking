@@ -1,0 +1,12 @@
+numpy
+scipy
+shapely
+pyclipper
+pyvisgraph
+tqdm
+visilibity
+PyQt5
+pygame
+matplotlib
+seaborn
+bidict

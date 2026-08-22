@@ -1,0 +1,11 @@
+.git
+__pycache__/
+*.py[cod]
+*.pyo
+.DS_Store
+.idea/
+pursuer_debug.log
+resources/ker_cache.pkl
+resources/ker_geodesic.graph
+resources/output.txt
+RoadmapBasedTracking/.git

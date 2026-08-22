@@ -43,10 +43,37 @@ numpy
 Install dependencies:
 
 ```bash
-pip install PyQt5 pygame pyvisgraph shapely pyclipper scipy seaborn bidict numpy
+pip install -r requirements.txt
 ```
 
-`visilibity` must be built from source or installed via a compatible wheel.
+`visilibity` builds from source on install and needs a C++ toolchain and `swig` available.
+
+---
+
+## Docker
+
+A `Dockerfile` and `docker-run.sh` are included so you don't need to install the toolchain locally. The repo is bind-mounted into the container rather than copied in, so edits on the host are picked up immediately without rebuilding.
+
+```bash
+./docker-run.sh
+```
+
+This builds the `roadmaptracking` image on first run, then drops you into a shell in the `roadmaptracking-dev` container with the repo mounted at `/app`. Running it again attaches to that same container (starting it back up if it was stopped) instead of creating a new one. From the shell:
+
+```bash
+python main.py
+```
+
+Other flags:
+
+```bash
+./docker-run.sh --build   # force a rebuild of the image
+./docker-run.sh --rm      # stop and remove the dev container
+```
+
+The container is launched with `--net=host` and the host's `/tmp/.X11-unix` mounted in, so PyQt5/pygame windows render on the host's X display — this setup targets Linux with a running X server.
+
+GPU-accelerated GLX is disabled in favor of software rendering (`LIBGL_ALWAYS_SOFTWARE=1`, `QT_XCB_GL_INTEGRATION=none`), since the container can't use a host GPU that's bound to a proprietary driver (e.g. NVIDIA). This app only does 2D drawing, so there's no performance cost.
 
 ---
 
