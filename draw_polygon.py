@@ -9,6 +9,8 @@ from shapely.geometry import Polygon as ShapelyPolygon
 from config import FILE_NAME
 
 CLOSE_SNAP_PX = 12   # click within this many pixels of the start point to close
+GRAB_SNAP_PX  = 10   # click within this many pixels of any vertex to grab it
+DRAG_THRESH_PX = 4    # movement past this turns a press into a drag, not a click
 
 
 def load_polygon() -> list:
@@ -94,27 +96,49 @@ def draw_polygon() -> list:
         for i, (text, color) in enumerate(lines):
             screen.blit(size_font.render(text, True, color), (x, y + i * 18))
 
+    def _nearest_vertex(cx, cy):
+        for i, p in enumerate(points):
+            vx, vy = to_px(*p)
+            if math.hypot(cx - vx, cy - vy) < GRAB_SNAP_PX:
+                return i
+        return None
+
+    press_idx    = None   # vertex index the mouse went down on, pending drag/click
+    press_pos    = None   # pixel pos of that mousedown, to detect drag threshold
+    dragging_idx = None   # vertex actively being dragged this frame
+
     running = True
     while running:
         screen.fill(GRAY)
         draw_grid()
 
         mx, my = pygame.mouse.get_pos()
-        near_start = (not closed and len(points) >= 3
-                     and math.hypot(mx - to_px(*points[0])[0],
-                                    my - to_px(*points[0])[1]) < CLOSE_SNAP_PX)
+        hover_idx = _nearest_vertex(mx, my) if dragging_idx is None else None
+        near_start = (not closed and len(points) >= 3 and hover_idx == 0)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif not closed and event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 cx, cy = event.pos
-                click_near_start = (len(points) >= 3 and math.hypot(
-                    cx - to_px(*points[0])[0], cy - to_px(*points[0])[1]) < CLOSE_SNAP_PX)
-                if click_near_start:
-                    closed = True
-                else:
+                idx = _nearest_vertex(cx, cy)
+                if idx is not None:
+                    press_idx, press_pos = idx, (cx, cy)
+                elif not closed:
                     points.append(from_px(cx, cy))
+            elif event.type == pygame.MOUSEMOTION:
+                if press_idx is not None and dragging_idx is None:
+                    if math.hypot(event.pos[0] - press_pos[0],
+                                  event.pos[1] - press_pos[1]) > DRAG_THRESH_PX:
+                        dragging_idx = press_idx
+                if dragging_idx is not None:
+                    points[dragging_idx] = from_px(*event.pos)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if dragging_idx is not None:
+                    dragging_idx = None
+                elif press_idx == 0 and not closed and len(points) >= 3:
+                    closed = True   # plain click (no drag) on the start vertex
+                press_idx = None
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and len(points) > 2:
                     closed = True
@@ -124,25 +148,33 @@ def draw_polygon() -> list:
                     running = False
                 elif event.key == pygame.K_n:
                     points, closed = [], False
+                    press_idx = dragging_idx = None
                 elif event.key == pygame.K_BACKSPACE and points:
                     if closed:
                         closed = False   # reopen for editing instead of popping the last vertex
                     else:
                         points.pop()
+                        press_idx = dragging_idx = None   # stale index if it pointed at the last vertex
 
         # ---- draw ------------------------------------------------------
         px_pts = [to_px(px, py) for px, py in points]
         if len(px_pts) > 1:
             pygame.draw.lines(screen, RED, closed, px_pts, 2)
 
-        if not closed and px_pts:
+        if not closed and px_pts and dragging_idx is None and press_idx is None:
             # rubber-band preview of the next segment
             preview_color = GREEN if near_start else YELLOW
             pygame.draw.line(screen, preview_color, px_pts[-1], (mx, my), 1)
 
+        MAGENTA = (230, 90, 220)
+        GRAB    = (230, 200, 60)
         for i, p in enumerate(px_pts):
-            if i == 0 and not closed and len(points) >= 3:
+            if i == dragging_idx:
+                color, r = MAGENTA, 8
+            elif i == 0 and not closed and len(points) >= 3:
                 color, r = (GREEN if near_start else START_PT), (7 if near_start else 5)
+            elif i == hover_idx:
+                color, r = GRAB, 6
             else:
                 color, r = WHITE, 3
             pygame.draw.circle(screen, color, p, r)
@@ -163,12 +195,19 @@ def draw_polygon() -> list:
                           WHITE))
             if near_start:
                 status.append(('Click to CLOSE here', GREEN))
+            elif hover_idx is not None:
+                status.append((f'Drag to move vertex {hover_idx}', GRAB))
+        if dragging_idx is not None:
+            status.append((f'Dragging vertex {dragging_idx}', MAGENTA))
+        elif closed and hover_idx is not None:
+            status.append((f'Drag to move vertex {hover_idx}', GRAB))
         status.append((f'cursor: ({from_px(mx, my)[0]:.0f}, {from_px(mx, my)[1]:.0f})',
                        (170, 170, 170)))
         blit_lines(status, 10, 8, font)
 
         hints = [
-            ('click: add point   click near start / SPACE: close', (170, 170, 170)),
+            ('click: add point   drag a vertex: move it   click near start / SPACE: close',
+             (170, 170, 170)),
             ('BACKSPACE: undo point (or reopen if closed)   N: new   P: print   ESC: done',
              (170, 170, 170)),
         ]

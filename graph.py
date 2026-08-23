@@ -1,15 +1,34 @@
 """Geodesic path queries, graph construction, and Dijkstra over the patrol graph."""
 import copy
 import heapq
+import random
 
 import numpy as np
 import pyvisgraph as vg
+import visilibity as vis
 from bidict import bidict
 from scipy.sparse.csgraph import csgraph_from_dense
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, Polygon as ShapelyPolygon
 
-from config import BOUNDARY_X, BOUNDARY_Y
-from geometry import add_unique_point, distance_vg
+from config import BOUNDARY_X, BOUNDARY_Y, EPSILON
+from geometry import add_unique_point, distance_vg, suppress_output
+
+# pyvisgraph's sweep-line visibility-graph builder has known crashes on
+# symmetric/degenerate input (e.g. a plain axis-aligned rectangle) — its
+# Edge.__lt__ tie-break assumes any two edges equidistant from the scan
+# point share a vertex, which isn't always true, and other code paths
+# divide by zero on aligned geometry. A tiny deterministic jitter breaks
+# the exact float ties that trigger these, at a scale far below anything
+# visually or geometrically meaningful.
+_JITTER_MAG  = 1e-4   # world units
+_JITTER_SEED = 1337   # fixed, so the same polygon always gets the same jitter
+
+
+def _jitter(pts):
+    rng = random.Random(_JITTER_SEED)
+    return [vg.Point(p.x + rng.uniform(-_JITTER_MAG, _JITTER_MAG),
+                     p.y + rng.uniform(-_JITTER_MAG, _JITTER_MAG))
+            for p in pts]
 
 
 class Geodesic:
@@ -18,27 +37,75 @@ class Geodesic:
     def __init__(self, poly):
         self._poly = poly
         self.graph: vg.VisGraph = None
+        self._room  = None   # lazy: buffered shapely shape, for path validation
+        self._venv  = None   # lazy: visilibity Environment, for the fallback below
 
     def build(self):
         poly   = self._poly
         maxx_i = max(range(len(poly)), key=lambda i: poly[i].x())
         vgpoly = [vg.Point(pt.x(), pt.y()) for pt in poly]
+
+        # The rim must strictly enclose the polygon with real margin, or the
+        # hole-bridging construction below (splicing the polygon into a
+        # bounding rectangle so pyvisgraph treats the polygon's interior as
+        # free space) produces an invalid/self-touching input and the
+        # resulting visibility graph can include edges that cut outside the
+        # polygon. BOUNDARY_X/Y (500) is also the drawing tool's canvas
+        # extent, so a legitimately-drawn polygon can reach right up to it —
+        # a fixed rim at exactly that size leaves no safety margin. Compute
+        # the rim from the actual polygon's extent instead, always with
+        # genuine headroom beyond it.
+        xs = [p.x() for p in poly]
+        ys = [p.y() for p in poly]
+        margin = max(max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 0.5, 100)
+        rim_x  = max(BOUNDARY_X, max(abs(v) for v in xs) + margin)
+        rim_y  = max(BOUNDARY_Y, max(abs(v) for v in ys) + margin)
+
         rim = [
-            vg.Point(poly[maxx_i].x(),  BOUNDARY_Y),
-            vg.Point(-BOUNDARY_X,        BOUNDARY_Y),
-            vg.Point(-BOUNDARY_X,       -BOUNDARY_Y),
-            vg.Point(poly[maxx_i].x(), -BOUNDARY_Y),
+            vg.Point(poly[maxx_i].x(),  rim_y),
+            vg.Point(-rim_x,             rim_y),
+            vg.Point(-rim_x,            -rim_y),
+            vg.Point(poly[maxx_i].x(), -rim_y),
         ]
         vgpoly = vgpoly[:maxx_i + 1] + rim + vgpoly[maxx_i:]
+        vgpoly = _jitter(vgpoly)
         self.graph = vg.VisGraph()
         self.graph.build([vgpoly])
 
     def shortest_path(self, a, b):
-        return self.graph.shortest_path(vg.Point(a[0], a[1]), vg.Point(b[0], b[1]))
+        sp = self.graph.shortest_path(vg.Point(a[0], a[1]), vg.Point(b[0], b[1]))
+        if self._path_stays_inside(sp):
+            return sp
+        # pyvisgraph's dynamic on-the-fly visibility check (used whenever the
+        # query points aren't exact existing graph vertices — always true
+        # here, since build() jitters them) has its own correctness bugs
+        # independent of the sweep-line crash worked around there: it can
+        # report a false line-of-sight straight across a real reflex-corner
+        # notch. Fall back to visilibity's independent shortest-path
+        # implementation, which doesn't share that bug.
+        with suppress_output():
+            raw = self._env().shortest_path(vis.Point(a[0], a[1]), vis.Point(b[0], b[1]), EPSILON)
+        return [vg.Point(p.x(), p.y()) for p in raw.path()]
 
     def get_distance(self, a, b):
         sp = self.shortest_path(a, b)
         return sum(distance_vg(sp[i], sp[i + 1]) for i in range(len(sp) - 1))
+
+    def _path_stays_inside(self, sp) -> bool:
+        if self._room is None:
+            self._room = ShapelyPolygon([(p.x(), p.y()) for p in self._poly]).buffer(2)
+        for i in range(len(sp) - 1):
+            seg = LineString([(sp[i].x, sp[i].y), (sp[i + 1].x, sp[i + 1].y)])
+            if not self._room.contains(seg):
+                return False
+        return True
+
+    def _env(self) -> vis.Environment:
+        if self._venv is None:
+            walls = vis.Polygon(list(reversed(self._poly)))
+            self._venv = vis.Environment([walls])
+            self._venv.PRINTING_DEBUG_DATA = False
+        return self._venv
 
 
 # ---------------------------------------------------------------------------
