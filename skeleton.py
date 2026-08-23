@@ -8,6 +8,13 @@ import numpy as np
 from shapely.geometry import LineString, Polygon
 from scipy.spatial import Voronoi as SciVoronoi
 
+# Independent RNG for evader destination choice — must NOT share state with
+# the `random` module-global, since ker_pipeline.build() calls
+# `random.seed(90)` for KER-construction reproducibility. Sharing state would
+# make the evader draw an identical "random" destination sequence on every
+# run (same start position + same freshly-reset global RNG state).
+_rng = random.Random()
+
 
 def build_voronoi_skeleton(shapely_poly: Polygon, samples: int = 300):
     """
@@ -110,10 +117,18 @@ def skeleton_path(nodes, adj, src_idx, dst_idx) -> list:
 
 
 def pick_destination(nodes, adj, src_idx, min_hops: int = 8,
-                     top_frac: float = 0.25) -> int:
+                     top_frac: float = 0.25, avoid=None) -> int:
     """BFS from src_idx; pick a random node from the spatially farthest
     *top_frac* fraction of nodes that are at least *min_hops* away.
-    This prevents the evader from repeatedly heading to the same cluster."""
+
+    *avoid* is an optional collection of recently-visited destination node
+    indices. Without it, "farthest from here" alone tends to ping-pong
+    between the same two extreme regions of the graph (B is often the
+    farthest point from A, and A the farthest from B). Excluding recent
+    destinations (and their immediate neighbours, so we don't just land one
+    hop away from where we've already been) forces genuine exploration of
+    new areas instead.
+    """
     visited = {src_idx: 0}
     q = deque([src_idx])
     while q:
@@ -125,12 +140,21 @@ def pick_destination(nodes, adj, src_idx, min_hops: int = 8,
     far = [n for n, hops in visited.items() if hops >= min_hops]
     if not far:
         far = [n for n in visited if n != src_idx] or [src_idx]
+
+    if avoid:
+        excluded = set(avoid)
+        for a in set(avoid):
+            excluded.update(adj.get(a, {}))
+        narrowed = [n for n in far if n not in excluded]
+        if narrowed:
+            far = narrowed
+
     # Sort by Euclidean distance descending; sample from the far end only
     sx, sy = nodes[src_idx]
     far.sort(key=lambda n: math.hypot(nodes[n][0] - sx, nodes[n][1] - sy),
              reverse=True)
     cutoff = max(1, int(len(far) * top_frac))
-    return random.choice(far[:cutoff])
+    return _rng.choice(far[:cutoff])
 
 
 def build_prm(shapely_poly, n_samples: int = 200, k_neighbors: int = 10):

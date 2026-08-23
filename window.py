@@ -8,6 +8,7 @@ import os
 import random
 import time
 import threading
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -125,6 +126,7 @@ class Window(QMainWindow):
         self._skel_path: list   = []
         self._skel_path_pos: float = 0.0
         self._skel_seg_idx: int = 0
+        self._skel_dest_history = deque(maxlen=3)  # avoid re-picking recent spots
         self._evader_speed: float = 30.0   # px / second
 
         # Autonomous observer state
@@ -392,7 +394,9 @@ class Window(QMainWindow):
             if self.auto_evader and self._skel_nodes and not self._skel_path:
                 ex, ey = self.draggable_point_evader.x(), self.draggable_point_evader.y()
                 src = _skeleton_nearest_node(self._skel_nodes, ex, ey)
-                dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, src)
+                dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, src,
+                                                 avoid=self._skel_dest_history)
+                self._skel_dest_history.append(dst)
                 self._skel_path     = _skeleton_path(self._skel_nodes, self._skel_adj, src, dst)
                 self._skel_seg_idx  = 0
                 self._skel_path_pos = 0.0
@@ -744,13 +748,16 @@ class Window(QMainWindow):
                             dst = self._queued_dest
                             self._queued_dest = None
                         else:
-                            dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node)
+                            dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node,
+                                                             avoid=self._skel_dest_history)
                         new_path = _skeleton_path(self._skel_nodes, self._skel_adj, cur_node, dst)
                         # Fallback: queued dest was trivial (same node) — auto-pick instead
                         if not new_path or len(new_path) <= 1:
-                            dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node)
+                            dst = _skeleton_pick_destination(self._skel_nodes, self._skel_adj, cur_node,
+                                                             avoid=self._skel_dest_history)
                             new_path = _skeleton_path(self._skel_nodes, self._skel_adj, cur_node, dst)
                         if new_path and len(new_path) > 1:
+                            self._skel_dest_history.append(dst)
                             self._skel_path     = new_path
                             self._skel_seg_idx  = 0
                             self._skel_path_pos = 0.0
