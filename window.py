@@ -29,6 +29,7 @@ from skeleton import nearest_node as _skeleton_nearest_node
 from skeleton import skeleton_path as _skeleton_path
 from skeleton import pick_destination as _skeleton_pick_destination
 from skeleton import build_prm as _build_prm
+from pursuer_motion import StableNodeController
 
 # ---------------------------------------------------------------------------
 # Pursuer debug log
@@ -143,12 +144,10 @@ class Window(QMainWindow):
 
         # Roadmap pursuer state
         self._roadmap_pursuer: bool   = False
+        self._pursuer_strategy: str   = 'minmax-alpha'  # cycled with S key
+        self._strategy_obj            = None            # lazy benchmark pursuer
         self._roadmap_obs_pos         = None
-        self._roadmap_base_path: list = []
-        self._roadmap_base_idx: int   = 0
-        self._roadmap_guard_pos       = None
-        self._roadmap_edge_behind     = None
-        self._roadmap_direct: bool    = False
+        self._rm_ctrl                 = StableNodeController()
         self._dbg_prev_pursuer_pos    = None
         self._dbg_frame_count: int    = 0
         self._dbg_dir_flips: int      = 0
@@ -400,11 +399,7 @@ class Window(QMainWindow):
                 spawn = self._best_los_spawn(float(ex), float(ey))
                 self._auto_observer_pos  = list(spawn)
                 self._roadmap_obs_pos    = list(spawn)
-                self._roadmap_base_path  = []
-                self._roadmap_base_idx   = 0
-                self._roadmap_guard_pos  = None
-                self._roadmap_edge_behind = None
-                self._roadmap_direct     = False
+                self._rm_ctrl.reset(spawn)
                 self._prm_path           = []
                 self._prm_seg_idx        = 0
                 self._prm_seg_pos        = 0.0
@@ -417,6 +412,12 @@ class Window(QMainWindow):
         elif e.key() == Qt.Key_G:
             self._show_prm = not self._show_prm
             print(f'[PRM-GRAPH] {"ON" if self._show_prm else "OFF"}')
+        elif e.key() == Qt.Key_S:
+            _cycle = ['minmax-alpha', 'geo-follow', 'tsp-patrol']
+            _i = _cycle.index(self._pursuer_strategy)
+            self._pursuer_strategy = _cycle[(_i + 1) % len(_cycle)]
+            self._strategy_obj = None   # rebuilt lazily for the new strategy
+            print(f'[STRATEGY] {self._pursuer_strategy}')
         elif e.key() == Qt.Key_V:
             self._gating_enabled = not self._gating_enabled
             ker_pipeline.set_gating_enabled(self._gating_enabled)
@@ -429,11 +430,7 @@ class Window(QMainWindow):
                     ex, ey = self.draggable_point_evader.x(), self.draggable_point_evader.y()
                     spawn = self._best_los_spawn(float(ex), float(ey))
                     self._roadmap_obs_pos    = list(spawn)
-                    self._roadmap_base_path  = []
-                    self._roadmap_base_idx   = 0
-                    self._roadmap_guard_pos  = None
-                    self._roadmap_edge_behind = None
-                    self._roadmap_direct     = False
+                    self._rm_ctrl.reset(spawn)
                 elif not self._roadmap_pursuer and self._auto_observer_pos is None:
                     ex, ey = self.draggable_point_evader.x(), self.draggable_point_evader.y()
                     spawn = self._best_los_spawn(float(ex), float(ey))
@@ -730,6 +727,9 @@ class Window(QMainWindow):
                 self._d_text(-490, -430, '[A] AUTO EVADER ON', size=11)
                 pursuer_label = 'ROADMAP' if self._roadmap_pursuer else 'FREE'
                 self._d_text(-490, -410, f'[P] pursuer: {pursuer_label}', size=11)
+                if self._roadmap_pursuer:
+                    self._d_text(-350, -410,
+                                 f'[S] strategy: {self._pursuer_strategy}', size=11)
 
                 # Step evader along skeleton path
                 speed = self._evader_speed * dt
@@ -803,7 +803,26 @@ class Window(QMainWindow):
 
                 # Step roadmap pursuer
                 if self._roadmap_pursuer and self._roadmap_obs_pos is not None:
-                    self._step_roadmap_pursuer(guard, data, dt)
+                    if self._pursuer_strategy == 'minmax-alpha':
+                        target = guard
+                    else:
+                        if self._strategy_obj is None or \
+                                self._strategy_obj.name != self._pursuer_strategy:
+                            from benchmark.pursuers import PURSUER_CLASSES
+                            ex_ = float(self.draggable_point_evader.x())
+                            ey_ = float(self.draggable_point_evader.y())
+                            self._strategy_obj = PURSUER_CLASSES[
+                                self._pursuer_strategy](
+                                    data, (ex_, ey_), self._pursuer_speed)
+                        ex_ = float(self.draggable_point_evader.x())
+                        ey_ = float(self.draggable_point_evader.y())
+                        tx_, ty_ = self._strategy_obj.target(
+                            (ex_, ey_), fc.path_lengths,
+                            tuple(self._roadmap_obs_pos))
+                        target = Point(tx_, ty_)
+                        self._d_ring(tx_, ty_, 10, QColor(255, 120, 255, 200),
+                                     width=2)
+                    self._step_roadmap_pursuer(target, data, dt)
 
                 # Step free (autonomous) observer via PRM
                 elif self._auto_observer_pos is not None:
@@ -896,111 +915,13 @@ class Window(QMainWindow):
     def _step_roadmap_pursuer(self, guard, data, dt: float = 0.016):
         pspeed = self._pursuer_speed * dt
         gx, gy = guard.x, guard.y
-        px, py = self._roadmap_obs_pos
+        _px_start, _py_start = self._roadmap_obs_pos
         self._dbg_frame_count += 1
 
-        # Replan every frame (stable-node approach)
-        _plan_dist, wp = dijkstra(data.graph, (px, py), Point(gx, gy))
-        if len(wp) < 2:
-            nearest = min(data.graph.keys(),
-                          key=lambda n: math.hypot(n[0] - gx, n[1] - gy))
-            _plan_dist, wp = dijkstra(data.graph, (px, py), Point(*nearest))
-
-        new_base = wp[1:-1]
-
-        while new_base and math.hypot(new_base[0][0] - px, new_base[0][1] - py) < 0.5:
-            _at_node = new_base[0]
-            _dbg(f'[PURSUER] STRIP AT-POS node={_at_node} (pursuer already here)')
-            self._roadmap_edge_behind = _at_node
-            if (self._roadmap_base_idx < len(self._roadmap_base_path) and
-                    math.hypot(self._roadmap_base_path[self._roadmap_base_idx][0] - _at_node[0],
-                               self._roadmap_base_path[self._roadmap_base_idx][1] - _at_node[1]) < 0.5):
-                self._roadmap_base_idx += 1
-            new_base = new_base[1:]
-
-        def _node_eq(a, b, tol=0.5):
-            return math.hypot(a[0] - b[0], a[1] - b[1]) < tol
-
-        if len(new_base) == 0:
-            if self._roadmap_base_path:
-                _dbg(f'[PURSUER][frame={self._dbg_frame_count}] '
-                     f'DIRECT (same edge) pursuer=({px:.1f},{py:.1f}) '
-                     f'guard=({gx:.1f},{gy:.1f})')
-            self._roadmap_base_path = []
-            self._roadmap_base_idx  = 0
-            self._roadmap_direct    = True
-        else:
-            _cur_target = (self._roadmap_base_path[self._roadmap_base_idx]
-                           if self._roadmap_base_idx < len(self._roadmap_base_path)
-                           else None)
-            _new_base = new_base[:]
-            if (self._roadmap_edge_behind is not None and
-                    _new_base and
-                    _node_eq(_new_base[0], self._roadmap_edge_behind) and
-                    (
-                        (_cur_target is not None and len(_new_base) >= 2 and
-                         _node_eq(_new_base[1], _cur_target))
-                        or
-                        (_cur_target is None and self._roadmap_direct)
-                    )):
-                _dbg(f'[PURSUER][frame={self._dbg_frame_count}] STRIP ARTIFACT node={_new_base[0]}')
-                _new_base.pop(0)
-
-            if not _new_base:
-                self._roadmap_base_path = []
-                self._roadmap_base_idx  = 0
-                self._roadmap_direct    = True
-                _dbg(f'[PURSUER][frame={self._dbg_frame_count}] SAME EDGE — direct to guard')
-            elif _cur_target is not None and _node_eq(_new_base[0], _cur_target):
-                self._roadmap_base_path = (self._roadmap_base_path[:self._roadmap_base_idx]
-                                           + _new_base)
-                self._roadmap_direct = False
-                _dbg(f'[PURSUER][frame={self._dbg_frame_count}] '
-                     f'TAIL-UPDATE next={_cur_target} new_tail_len={len(_new_base)}')
-            else:
-                self._roadmap_direct = False
-                _dbg(f'[PURSUER][frame={self._dbg_frame_count}] '
-                     f'NODE-CHANGE old_next={_cur_target} new_next={_new_base[0]} '
-                     f'pursuer=({px:.1f},{py:.1f}) guard=({gx:.1f},{gy:.1f}) '
-                     f'path_len={_plan_dist:.1f} base_nodes={_new_base}')
-                self._roadmap_base_path = _new_base
-                self._roadmap_base_idx  = 0
-
-        self._roadmap_guard_pos = (gx, gy)
-
-        # Walk toward current committed target
-        _px_start, _py_start = px, py
-        rem = pspeed
-        while rem > 0:
-            if self._roadmap_base_idx < len(self._roadmap_base_path):
-                tx, ty = self._roadmap_base_path[self._roadmap_base_idx]
-            elif self._roadmap_guard_pos is not None:
-                tx, ty = self._roadmap_guard_pos
-            else:
-                break
-            dx_, dy_ = tx - px, ty - py
-            d_wp = math.hypot(dx_, dy_)
-            if d_wp < 1e-4:
-                if self._roadmap_base_idx < len(self._roadmap_base_path):
-                    self._roadmap_edge_behind = (tx, ty)
-                    self._roadmap_base_idx += 1
-                else:
-                    break
-                continue
-            if d_wp <= rem:
-                px, py = tx, ty
-                rem -= d_wp
-                if self._roadmap_base_idx < len(self._roadmap_base_path):
-                    self._roadmap_edge_behind = (tx, ty)
-                    self._roadmap_base_idx += 1
-                else:
-                    break
-            else:
-                if (self._roadmap_base_idx < len(self._roadmap_base_path)
-                        or self._roadmap_direct):
-                    px += (dx_ / d_wp) * rem
-                    py += (dy_ / d_wp) * rem
-                rem = 0
+        self._rm_ctrl.pos = list(self._roadmap_obs_pos)
+        px, py = self._rm_ctrl.step(
+            data.graph, (gx, gy), pspeed,
+            log=lambda m: _dbg(f'[PURSUER][frame={self._dbg_frame_count}] {m}'))
         self._roadmap_obs_pos = [px, py]
 
         # Oscillation detector
@@ -1016,8 +937,8 @@ class Window(QMainWindow):
                          f'DIRECTION FLIP #{self._dbg_dir_flips} '
                          f'dot={_dot:.2f} moved={_moved:.2f} '
                          f'pos=({px:.1f},{py:.1f}) guard=({gx:.1f},{gy:.1f}) '
-                         f'base_idx={self._roadmap_base_idx}/{len(self._roadmap_base_path)} '
-                         f'base_path={self._roadmap_base_path}')
+                         f'base_idx={self._rm_ctrl.base_idx}/{len(self._rm_ctrl.base_path)} '
+                         f'base_path={self._rm_ctrl.base_path}')
                 else:
                     self._dbg_dir_flips = 0
             self._dbg_prev_move_vec = _cur_vec
@@ -1038,15 +959,13 @@ class Window(QMainWindow):
 
         # Draw committed base-node path
         C_RM_PATH  = QColor(255, 220, 0, 160)
-        _draw_pts  = ([(px, py)] +
-                      self._roadmap_base_path[self._roadmap_base_idx:] +
-                      [(gx, gy)])
+        _remaining_nodes = self._rm_ctrl.base_path[self._rm_ctrl.base_idx:]
+        _draw_pts  = [(px, py)] + _remaining_nodes + [(gx, gy)]
         for si in range(len(_draw_pts) - 1):
             ax, ay = _draw_pts[si]
             bx, by = _draw_pts[si + 1]
             self._d_glow_line(ax, ay, bx, by, C_RM_PATH, width=2)
 
-        _remaining_nodes = self._roadmap_base_path[self._roadmap_base_idx:]
         for _ni, _bn in enumerate(_remaining_nodes):
             self._d_dot(_bn[0], _bn[1], 5, QColor(255, 220, 0, 200))
             self._d_text(int(_bn[0]) + 7, int(_bn[1]) + 7, str(_ni + 1), size=9)

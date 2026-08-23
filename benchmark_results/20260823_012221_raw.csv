@@ -1,0 +1,3 @@
+environment,strategy,evader,seed,mean_alpha,peak_alpha,los_pct,n_breach
+poly6,minmax-alpha,skeleton,0,0.909659793252507,0.9189043165444454,100.0,0
+poly6,minmax-alpha,skeleton,1,0.6573224420600678,0.7366387747398391,100.0,0

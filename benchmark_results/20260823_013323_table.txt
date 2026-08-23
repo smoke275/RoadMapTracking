@@ -1,0 +1,4 @@
+# polygons=['poly6'] strategies=['minmax-alpha'] evaders=['skeleton'] seeds=8 frames=40 sp=0.8 se=1.0 workers=4 sequential=False
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly6        Min-Max α-Guard (Proposed)   Skeleton Evader         0.81±0.15    0.92±0.18 95.62±12.37%     0.0±0.0

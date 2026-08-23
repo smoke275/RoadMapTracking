@@ -184,6 +184,7 @@ class SimulationData:
     skel_nodes:          list
     skel_adj:            dict
     skel_edges:          list
+    guards:              list = field(default_factory=list)  # selected guard (x, y) positions
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +285,8 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
         geodesic            = Geodesic(poly)
         geodesic.graph      = _cached_geo
         scipy_g             = csgraph_from_dense(dense, null_value=-1)
+        guards              = [tuple(_cached['KER_coords'][i])
+                               for i in _cached['chosed_set']]
         palette             = sns.color_palette('husl', len(corners))
 
         if renderer:
@@ -674,6 +677,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
 
         rows, cols_sp, _ = sp_find(scipy_g)
         total_edges      = list(zip(cols_sp, rows))
+        guards           = [(KER[i].x(), KER[i].y()) for i in chosed_set]
 
         save_cache(fingerprint, {
             'corners':             list(corners),
@@ -719,6 +723,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
         skel_nodes=skel_nodes,
         skel_adj=skel_adj,
         skel_edges=skel_edges,
+        guards=guards,
     )
 
 
