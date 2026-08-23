@@ -413,6 +413,7 @@ class Window(QMainWindow):
                 self._auto_observer_pos  = None
                 self._roadmap_obs_pos    = None
                 self._prm_last_guard     = None
+                self._queued_dest        = None  # drop stale click-destination
         elif e.key() == Qt.Key_G:
             self._show_prm = not self._show_prm
             print(f'[PRM-GRAPH] {"ON" if self._show_prm else "OFF"}')

@@ -95,6 +95,16 @@ python main.py -r
 
 The pipeline caches results keyed by a SHA-256 fingerprint of the polygon. Use `-r` after changing the polygon or algorithm parameters to recompute from scratch.
 
+### Skip the polygon-drawing tool
+
+```bash
+python main.py --skip-draw
+# or
+python main.py -s
+```
+
+Loads the polygon straight from `resources/` (`config.py`'s `FILE_NAME`) instead of opening the interactive pygame drawing tool — useful once you already have a polygon saved and just want to re-run the simulation.
+
 ---
 
 ## Controls

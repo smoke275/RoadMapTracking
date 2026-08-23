@@ -13,6 +13,12 @@ from shapely.geometry import LineString, Point, Polygon
 
 from config import EPSILON
 
+# Named numerical tolerances, kept distinct per semantic role even where the
+# magnitude happens to coincide (a near-vertical-line guard isn't the same
+# quantity as a zero-length-segment guard).
+_COLLINEAR_EPS  = 1e-9    # near-vertical-line guard in find_slope_and_intercept
+_DEGENERATE_EPS = 1e-12   # zero-length-segment guard
+
 
 @contextlib.contextmanager
 def suppress_output():
@@ -34,7 +40,7 @@ def suppress_output():
 def find_slope_and_intercept(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    if abs(x2 - x1) < 1e-9:
+    if abs(x2 - x1) < _COLLINEAR_EPS:
         return float('inf'), x1
     m = (y2 - y1) / (x2 - x1)
     return m, y1 - m * x1
@@ -43,7 +49,7 @@ def find_slope_and_intercept(p1, p2):
 def interpolate_point(a: Point, b: Point, s: float) -> Point:
     """Return the point s units along the segment a→b."""
     d = a.distance(b)
-    if d < 1e-12:
+    if d < _DEGENERATE_EPS:
         return a
     t = max(0.0, min(1.0, s / d))   # clamp: FP rounding must not overshoot
     return Point(a.x + t * (b.x - a.x), a.y + t * (b.y - a.y))
@@ -81,7 +87,7 @@ def minimum_distance(pt_a: vis.Point, pt_b: vis.Point, pt_e: vis.Point) -> float
     AE = np.array([pt_e.x() - pt_a.x(), pt_e.y() - pt_a.y()])
     BE = np.array([pt_e.x() - pt_b.x(), pt_e.y() - pt_b.y()])
     mod = np.linalg.norm(AB)
-    if mod < 1e-12:   # degenerate segment: return distance to endpoint
+    if mod < _DEGENERATE_EPS:   # degenerate segment: return distance to endpoint
         return math.hypot(pt_e.x() - pt_a.x(), pt_e.y() - pt_a.y())
     if np.dot(AB, BE) > 0:
         return math.hypot(pt_e.x() - pt_b.x(), pt_e.y() - pt_b.y())
@@ -112,8 +118,16 @@ def find_intersection(polygon, point: Point, direction):
         if inter.geom_type == 'MultiLineString':
             return inter.geoms[0].coords[0], inter
         if inter.geom_type == 'GeometryCollection':
-            pts = [g for g in inter.geoms if g.geom_type == 'Point']
-            return (pts[0].coords[0] if pts else None), inter
+            pts = sorted((g for g in inter.geoms if g.geom_type == 'Point'),
+                         key=lambda p: point.distance(p))
+            if not pts:
+                return None, inter
+            if skip == 0:
+                return pts[0].coords[0], inter
+            if len(pts) <= skip:
+                return None, inter
+            mid = Point((pts[0].x + pts[skip].x) / 2, (pts[0].y + pts[skip].y) / 2)
+            return (pts[skip].coords[0] if mid.within(poly_shape) else None), inter
         return None, inter
 
     fwd = LineString([point, (point.x + direction[0] * far, point.y + direction[1] * far)])

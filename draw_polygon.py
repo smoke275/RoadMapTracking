@@ -7,6 +7,18 @@ import visilibity as vis
 from config import FILE_NAME
 
 
+def load_polygon() -> list:
+    """Load the polygon straight from FILE_NAME, skipping the interactive
+    pygame drawing tool. Returns None if the file has fewer than 3 points."""
+    points = []
+    with open(FILE_NAME) as f:
+        for row in csv.reader(f):
+            points.append((float(row[0]), float(row[1])))
+    if len(points) < 3:
+        return None
+    return [vis.Point(p[0], p[1]) for p in points]
+
+
 def draw_polygon() -> list:
     pygame.init()
     W, H   = 700, 700

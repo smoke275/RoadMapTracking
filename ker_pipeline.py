@@ -40,6 +40,16 @@ try:
 except ImportError:
     _HAS_MILP = False
 
+# Named numerical tolerances (kept distinct per semantic role rather than
+# shared, since they guard different quantities that happen to share a
+# magnitude — see EPSILON in config.py for the separate visilibity tolerance).
+_CROSS_EPS       = 1e-9   # near-collinear guard on a 2D cross product
+_NORM_EPS        = 1e-9   # degenerate / duplicate-vertex vector norm
+_EDGE_LEN_EPS    = 1e-9   # patrol-edge length guard (elen)
+_PATH_LEN_FLOOR  = 1e-6   # floor on geodesic distance: prevents 1/L_c overflow
+_MIN_ASSO_AREA   = 1e-6   # minimum valid area for an A(c) association polygon
+_BREAKPOINT_ATOL = 1e-4   # tolerance for snapping a tent breakpoint to an edge endpoint
+
 
 def _greedy_set_cover(KER_corner_list, corners):
     """Greedy ln|C|-approximation. Used only as a fallback when MILP is
@@ -306,7 +316,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
             a, b, c = poly[(i - 1) % len(poly)], poly[i], poly[(i + 1) % len(poly)]
             s = [b.x() - a.x(), b.y() - a.y()]
             t = [c.x() - b.x(), c.y() - b.y()]
-            if s[0] * t[1] - t[0] * s[1] > 1e-9:   # epsilon guards near-collinear
+            if s[0] * t[1] - t[0] * s[1] > _CROSS_EPS:   # epsilon guards near-collinear
                 corners.append(i)
 
         if renderer:
@@ -359,7 +369,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
                 c = poly[boundary[(d + 1) % len(boundary)]]
                 s = [b.x() - a.x(), b.y() - a.y()]
                 t = [c.x() - b.x(), c.y() - b.y()]
-                if s[0] * t[1] - t[0] * s[1] > 1e-9:   # epsilon guards near-collinear
+                if s[0] * t[1] - t[0] * s[1] > _CROSS_EPS:   # epsilon guards near-collinear
                     removal.append(corner)
             current_corners = removal
 
@@ -451,7 +461,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
                 b1   = np.array([poly[it].x(), poly[it].y()])
                 diff = b1 - a1
                 norm = np.linalg.norm(diff)
-                if norm < 1e-9:       # degenerate / duplicate vertex — skip
+                if norm < _NORM_EPS:  # degenerate / duplicate vertex — skip
                     continue
                 c1 = diff / norm
                 last, _ = find_intersection(
@@ -733,7 +743,7 @@ def compute_path_lengths(ex: float, ey: float, data: SimulationData) -> dict:
             sp = [vg.Point(p.x(), p.y()) for p in raw.path()]
         pl = sum(Point(sp[i].x, sp[i].y).distance(Point(sp[i + 1].x, sp[i + 1].y))
                  for i in range(len(sp) - 1))
-        path_lengths[cors] = max(pl, 1.0)  # floor: prevents 1/L_c overflow
+        path_lengths[cors] = pl if pl > _PATH_LEN_FLOOR else _PATH_LEN_FLOOR
     return path_lengths
 
 
@@ -751,26 +761,43 @@ def set_gating_enabled(enabled: bool) -> None:
     _GATING_ENABLED = enabled
 
 
-def _vis_frac_area(px: float, py: float, asso_pts, env_vis) -> float:
-    """Fraction of A(c) visible from (px, py).  Result clamped to [0, 1].
-    asso_pts is the pyclipper polygon (list of (x, y) tuples) or None."""
+def _build_vis_shape(px: float, py: float, env_vis):
+    """Build the Shapely visibility polygon at (px, py), or None on failure.
+    The result depends only on (px, py) — compute it once per viewpoint and
+    reuse across corners rather than recomputing it per corner."""
     try:
-        if not asso_pts or len(asso_pts) < 3:
-            return 0.0
-        asso_shape = ShapelyPolygon(asso_pts)
-        if not asso_shape.is_valid or asso_shape.area < 1e-6:
-            return 0.0
         vp_raw = vis.Visibility_Polygon(vis.Point(px, py), env_vis, EPSILON)
         xs, ys = poly_to_points(vp_raw)
         if len(xs) < 3:
-            return 0.0
+            return None
         vis_shape = ShapelyPolygon(list(zip(xs, ys)))
         if not vis_shape.is_valid:
             vis_shape = vis_shape.buffer(0)
+        return vis_shape
+    except Exception:
+        return None
+
+
+def _vis_frac_of_shape(vis_shape, asso_pts) -> float:
+    """Fraction of A(c) (asso_pts) covered by an already-built visibility shape.
+    Result clamped to [0, 1]. asso_pts is the pyclipper polygon (list of
+    (x, y) tuples) or None."""
+    if vis_shape is None or not asso_pts or len(asso_pts) < 3:
+        return 0.0
+    try:
+        asso_shape = ShapelyPolygon(asso_pts)
+        if not asso_shape.is_valid or asso_shape.area < _MIN_ASSO_AREA:
+            return 0.0
         inter = vis_shape.intersection(asso_shape)
         return min(inter.area / asso_shape.area, 1.0)
     except Exception:
         return 0.0
+
+
+def _vis_frac_area(px: float, py: float, asso_pts, env_vis) -> float:
+    """Fraction of A(c) visible from (px, py).  Result clamped to [0, 1].
+    asso_pts is the pyclipper polygon (list of (x, y) tuples) or None."""
+    return _vis_frac_of_shape(_build_vis_shape(px, py, env_vis), asso_pts)
 
 
 def _get_node_vis_fracs(data: SimulationData) -> dict:
@@ -781,12 +808,65 @@ def _get_node_vis_fracs(data: SimulationData) -> dict:
         cache: dict = {}
         for v in node_ids:
             vx, vy = data.vertices[v].x, data.vertices[v].y
+            vis_shape = _build_vis_shape(vx, vy, data.env)
             cache[v] = {
-                corn: _vis_frac_area(vx, vy, data.asso.get(corn), data.env)
+                corn: _vis_frac_of_shape(vis_shape, data.asso.get(corn))
                 for corn in data.corners
             }
         _NODE_VIS_FRAC[key] = cache
     return _NODE_VIS_FRAC[key]
+
+
+def _edge_tent_store(v1: int, v2: int, elen: float,
+                      path_lengths: dict, _nf: dict, data: SimulationData) -> list:
+    """Build the per-corner weighted-tent (slope, intercept) entries for one
+    patrol edge (v1, v2). Shared by compute_optimal_guard and _opt_offset so
+    they can't silently diverge on the same edge's tent construction.
+    """
+    store = []
+    for corn in data.corners:
+        lam    = _ALPHA_LAMBDA if _GATING_ENABLED else 0.0
+        w1 = 1.0 - lam * _nf[v1][corn]
+        w2 = 1.0 - lam * _nf[v2][corn]
+
+        d1_r = data.vectors_org[v1][corn]
+        d2_r = data.vectors_org[v2][corn]
+        if not (math.isfinite(d1_r) and math.isfinite(d2_r)):
+            continue  # node unreachable from corner — skip tent
+        d1   = d1_r / path_lengths[corn]
+        d2   = d2_r / path_lengths[corn]
+        b    = max(0.0, min(elen, (d2_r + elen - d1_r) / 2))  # clamped to edge
+        w_b  = w1 + (w2 - w1) * (b / elen) if elen > _EDGE_LEN_EPS else w1
+        peak = d1 + b / path_lengths[corn]        # unweighted tent peak
+
+        d1_w   = w1  * d1
+        d2_w   = w2  * d2
+        peak_w = w_b * peak                       # weighted tent peak
+
+        # Check b's position first (prevents degenerate x-coords in slopes)
+        if np.isclose(b, 0, atol=_BREAKPOINT_ATOL) or np.isclose(b, elen, atol=_BREAKPOINT_ATOL):
+            if elen < _EDGE_LEN_EPS:
+                continue
+            m1, c1 = find_slope_and_intercept((0, d1_w), (elen, d2_w))
+            if not math.isfinite(m1):
+                continue
+            store.append(('increasing' if d1_w <= d2_w else 'decreasing', m1, c1))
+        elif d1_w < d2_w:
+            m1, c1 = find_slope_and_intercept((0, d1_w), (b, peak_w))
+            m2, c2 = find_slope_and_intercept((elen, d2_w), (b, peak_w))
+            if not (math.isfinite(m1) and math.isfinite(m2)):
+                continue
+            store.append(('mixed', m1, c1, m2, c2, b))
+        else:
+            m1, c1 = find_slope_and_intercept((elen, d2_w), (b, peak_w))
+            m2, c2 = find_slope_and_intercept((0, d1_w), (b, peak_w))
+            if not (math.isfinite(m1) and math.isfinite(m2)):
+                continue
+            store.append(('mixed', m2, c2, m1, c1, b))
+
+    if not store:
+        store = [('increasing', 0.0, 0.0)]
+    return store
 
 
 def compute_optimal_guard(path_lengths: dict, data: SimulationData):
@@ -806,49 +886,7 @@ def compute_optimal_guard(path_lengths: dict, data: SimulationData):
     for edge in data.total_edges:
         v1, v2 = edge[0], edge[1]
         elen   = data.vertices[v1].distance(data.vertices[v2])
-        store  = []
-        for corn in data.corners:
-            lam    = _ALPHA_LAMBDA if _GATING_ENABLED else 0.0
-            w1 = 1.0 - lam * _nf[v1][corn]
-            w2 = 1.0 - lam * _nf[v2][corn]
-
-            d1_r = data.vectors_org[v1][corn]
-            d2_r = data.vectors_org[v2][corn]
-            if not (math.isfinite(d1_r) and math.isfinite(d2_r)):
-                continue  # node unreachable from corner — skip tent
-            d1   = d1_r / path_lengths[corn]
-            d2   = d2_r / path_lengths[corn]
-            b    = max(0.0, min(elen, (d2_r + elen - d1_r) / 2))  # clamped to edge
-            w_b  = w1 + (w2 - w1) * (b / elen) if elen > 1e-9 else w1
-            peak = d1 + b / path_lengths[corn]        # unweighted tent peak
-
-            d1_w   = w1  * d1
-            d2_w   = w2  * d2
-            peak_w = w_b * peak                       # weighted tent peak
-
-            # Check b's position first (prevents degenerate x-coords in slopes)
-            if np.isclose(b, 0, atol=1e-4) or np.isclose(b, elen, atol=1e-4):
-                if elen < 1e-9:
-                    continue
-                m1, c1 = find_slope_and_intercept((0, d1_w), (elen, d2_w))
-                if not math.isfinite(m1):
-                    continue
-                store.append(('increasing' if d1_w <= d2_w else 'decreasing', m1, c1))
-            elif d1_w < d2_w:
-                m1, c1 = find_slope_and_intercept((0, d1_w), (b, peak_w))
-                m2, c2 = find_slope_and_intercept((elen, d2_w), (b, peak_w))
-                if not (math.isfinite(m1) and math.isfinite(m2)):
-                    continue
-                store.append(('mixed', m1, c1, m2, c2, b))
-            else:
-                m1, c1 = find_slope_and_intercept((elen, d2_w), (b, peak_w))
-                m2, c2 = find_slope_and_intercept((0, d1_w), (b, peak_w))
-                if not (math.isfinite(m1) and math.isfinite(m2)):
-                    continue
-                store.append(('mixed', m2, c2, m1, c1, b))
-
-        if not store:
-            store = [('increasing', 0.0, 0.0)]
+        store  = _edge_tent_store(v1, v2, elen, path_lengths, _nf, data)
         min_pt = process_functions(store, x_min=0, x_max=elen)
         edge_points.append((min_pt[0], min_pt[1], v1, v2))
 
@@ -867,31 +905,15 @@ def compute_alphas(ox_comp: float, oy_comp: float,
                           data.bi_map, Point(ox_comp, oy_comp))
     path_length_ref = max(path_lengths.values()) or 1
 
-    # Compute observer visibility polygon once, reuse for all corners
-    obs_vis_shape = None
-    try:
-        vp_raw = vis.Visibility_Polygon(vis.Point(ox_comp, oy_comp), data.env, EPSILON)
-        xs, ys = poly_to_points(vp_raw)
-        if len(xs) >= 3:
-            obs_vis_shape = ShapelyPolygon(list(zip(xs, ys)))
-            if not obs_vis_shape.is_valid:
-                obs_vis_shape = obs_vis_shape.buffer(0)
-    except Exception:
-        pass
+    # Observer visibility polygon only matters when gating is on — skip the
+    # (expensive) computation entirely otherwise.
+    obs_vis_shape = (_build_vis_shape(ox_comp, oy_comp, data.env)
+                      if _GATING_ENABLED else None)
 
     alphas = []
     for ct in data.corners:
-        vf = 0.0
-        asso_pts = data.asso.get(ct)
-        if asso_pts and len(asso_pts) >= 3 and obs_vis_shape is not None:
-            try:
-                asso_shape = ShapelyPolygon(asso_pts)
-                if asso_shape.is_valid and asso_shape.area > 1e-6:
-                    inter = obs_vis_shape.intersection(asso_shape)
-                    vf = min(inter.area / asso_shape.area, 1.0)
-            except Exception:
-                pass
         lam = _ALPHA_LAMBDA if _GATING_ENABLED else 0.0
+        vf = _vis_frac_of_shape(obs_vis_shape, data.asso.get(ct)) if _GATING_ENABLED else 0.0
         w = 1.0 - lam * vf
 
         dists = []
@@ -939,47 +961,7 @@ def _opt_offset(path_lengths, v1_idx, v2_idx, data):
         if edge[0] == v1_idx and edge[1] == v2_idx:
             v1, v2 = edge[0], edge[1]
             elen   = data.vertices[v1].distance(data.vertices[v2])
-            store  = []
-            for corn in data.corners:
-                lam    = _ALPHA_LAMBDA if _GATING_ENABLED else 0.0
-                w1 = 1.0 - lam * _nf[v1][corn]
-                w2 = 1.0 - lam * _nf[v2][corn]
-
-                d1_r = data.vectors_org[v1][corn]
-                d2_r = data.vectors_org[v2][corn]
-                if not (math.isfinite(d1_r) and math.isfinite(d2_r)):
-                    continue  # node unreachable from corner — skip tent
-                d1   = d1_r / path_lengths[corn]
-                d2   = d2_r / path_lengths[corn]
-                b    = max(0.0, min(elen, (d2_r + elen - d1_r) / 2))  # clamped to edge
-                w_b  = w1 + (w2 - w1) * (b / elen) if elen > 1e-9 else w1
-                peak = d1 + b / path_lengths[corn]
-
-                d1_w   = w1  * d1
-                d2_w   = w2  * d2
-                peak_w = w_b * peak
-
-                if np.isclose(b, 0, atol=1e-4) or np.isclose(b, elen, atol=1e-4):
-                    if elen < 1e-9:
-                        continue
-                    m1, c1 = find_slope_and_intercept((0, d1_w), (elen, d2_w))
-                    if not math.isfinite(m1):
-                        continue
-                    store.append(('increasing' if d1_w <= d2_w else 'decreasing', m1, c1))
-                elif d1_w < d2_w:
-                    m1, c1 = find_slope_and_intercept((0, d1_w), (b, peak_w))
-                    m2, c2 = find_slope_and_intercept((elen, d2_w), (b, peak_w))
-                    if not (math.isfinite(m1) and math.isfinite(m2)):
-                        continue
-                    store.append(('mixed', m1, c1, m2, c2, b))
-                else:
-                    m1, c1 = find_slope_and_intercept((elen, d2_w), (b, peak_w))
-                    m2, c2 = find_slope_and_intercept((0, d1_w), (b, peak_w))
-                    if not (math.isfinite(m1) and math.isfinite(m2)):
-                        continue
-                    store.append(('mixed', m2, c2, m1, c1, b))
-            if not store:
-                store = [('increasing', 0.0, 0.0)]
+            store  = _edge_tent_store(v1, v2, elen, path_lengths, _nf, data)
             min_pt = process_functions(store, x_min=0, x_max=elen)
             return min_pt[0]
     return 0.0

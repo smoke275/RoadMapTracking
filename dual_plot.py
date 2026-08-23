@@ -6,7 +6,34 @@ import numpy as np
 from shapely.geometry import LineString
 
 
+def _min_of_upper_envelope(funcs, x_min, x_max):
+    """Minimax point for 1-2 lines, evaluated directly (no convex hull needed).
+
+    ConvexHull requires >= 3 points to build a 2D hull, but the dual-hull
+    trick in process_lines is just a device for finding the x that minimizes
+    the pointwise max of the input lines — for 1-2 lines that's exact and
+    cheap without it: check the interval endpoints plus (for 2 lines) their
+    intersection, if it falls inside the interval.
+    """
+    candidates = {x_min, x_max}
+    if len(funcs) == 2:
+        (a1, b1), (a2, b2) = funcs[0], funcs[1]
+        if a1 != a2:
+            xi = (b2 - b1) / (a1 - a2)
+            if x_min <= xi <= x_max:
+                candidates.add(xi)
+    best = None
+    for x in candidates:
+        val = max(a * x + b for a, b in funcs)
+        if best is None or val < best[1]:
+            best = (x, val)
+    return best
+
+
 def process_lines(input_lines, x_min=-15, x_max=15, debug=False):
+    if len(input_lines) < 3:
+        return _min_of_upper_envelope(input_lines, x_min, x_max)
+
     points = np.copy(input_lines)
     points[:, 1] *= -1
 
