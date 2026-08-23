@@ -26,7 +26,7 @@ from shapely.geometry import LineString, Point, Polygon as ShapelyPolygon
 
 from cache import load_cache, poly_fingerprint, save_cache
 from config import EPSILON
-from geometry import (add_unique_linestring, add_unique_point,
+from geometry import (add_unique_linestring, add_unique_point, clean_polygon,
                       find_intersection, find_slope_and_intercept,
                       minimum_distance, poly_to_points, suppress_output)
 from graph import (Geodesic, add_observer_to_graph, construct_graph,
@@ -249,13 +249,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
             renderer.execute()
 
     # ---- Clean polygon --------------------------------------------------
-    clean = []
-    for p in poly:
-        if not clean or p.x() != clean[-1].x() or p.y() != clean[-1].y():
-            clean.append(p)
-    while len(clean) > 1 and clean[-1].x() == clean[0].x() and clean[-1].y() == clean[0].y():
-        clean.pop()
-    poly = clean
+    poly = clean_polygon(poly)
 
     x = [p.x() for p in poly]
     y = [p.y() for p in poly]

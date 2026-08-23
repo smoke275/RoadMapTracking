@@ -66,9 +66,12 @@ def draw_polygon() -> list:
     font       = pygame.font.SysFont("monospace", 15)
     font_small = pygame.font.SysFont("monospace", 12)
 
-    with open(FILE_NAME) as f:
-        for row in csv.reader(f):
-            points.append((float(row[0]), float(row[1])))
+    try:
+        with open(FILE_NAME) as f:
+            for row in csv.reader(f):
+                points.append((float(row[0]), float(row[1])))
+    except FileNotFoundError:
+        pass   # FILE_NAME doesn't exist yet — start from a blank canvas
     loaded_existing = len(points) > 0
     if loaded_existing:
         closed = True   # loaded polygon is already a finished shape

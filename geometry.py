@@ -37,6 +37,22 @@ def suppress_output():
             os.close(fd)
 
 
+def clean_polygon(poly: list) -> list:
+    """Drop consecutive duplicate vertices and a trailing point that
+    duplicates the first (a closed-loop artifact some polygon files save).
+    `poly` is a list of vis.Point. Anything reading a saved polygon file
+    should clean it exactly like this, or its vertex indices (and therefore
+    reflex-corner detection, which relies on adjacency) will disagree with
+    what ker_pipeline.build() actually operates on."""
+    clean = []
+    for p in poly:
+        if not clean or p.x() != clean[-1].x() or p.y() != clean[-1].y():
+            clean.append(p)
+    while len(clean) > 1 and clean[-1].x() == clean[0].x() and clean[-1].y() == clean[0].y():
+        clean.pop()
+    return clean
+
+
 def find_slope_and_intercept(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
