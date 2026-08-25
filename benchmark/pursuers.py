@@ -10,6 +10,7 @@ from geometry import interpolate_point
 from graph import dijkstra
 from ker_pipeline import compute_optimal_guard, compute_path_lengths, _opt_offset
 from pursuer_motion import StableNodeController
+from benchmark.kernel_pursuer import KernelWeightedPursuer
 
 
 class MinMaxAlphaPursuer:
@@ -144,6 +145,7 @@ class TSPPatrolPursuer:
 
 PURSUER_CLASSES = {
     'minmax-alpha': MinMaxAlphaPursuer,
+    'kernel-control': KernelWeightedPursuer,
     'geo-follow': GeoFollowPursuer,
     'tsp-patrol': TSPPatrolPursuer,
 }

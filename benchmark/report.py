@@ -8,6 +8,7 @@ STRATEGY_LABELS = {
     'minmax-alpha': 'Min-Max α-Guard (Proposed)',
     'geo-follow': 'Geo-Follow',
     'tsp-patrol': 'TSP-Patrol',
+    'kernel-control': 'Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25)',
 }
 EVADER_LABELS = {
     'skeleton': 'Skeleton Evader',

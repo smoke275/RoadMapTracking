@@ -185,6 +185,7 @@ class SimulationData:
     skel_adj:            dict
     skel_edges:          list
     guards:              list = field(default_factory=list)  # selected guard (x, y) positions
+    coverage_pct:        float = 0.0  # % of shapely_env area covered by guards' visibility union
 
 
 # ---------------------------------------------------------------------------
@@ -204,6 +205,28 @@ class FrameComputed:
 # ---------------------------------------------------------------------------
 # Corner association (clipped angular visibility wedge)
 # ---------------------------------------------------------------------------
+def _coverage_pct(guard_points, shapely_env, env) -> float:
+    """% of shapely_env's area covered by the union of guard_points' visibility
+    polygons. Shared by both the fresh-build and cached-load paths in build()."""
+    union = None
+    for gx, gy in guard_points:
+        if not shapely_env.buffer(1).contains(Point(gx, gy)):
+            continue
+        try:
+            vp = vis.Visibility_Polygon(vis.Point(gx, gy), env, EPSILON)
+            vx, vy = poly_to_points(vp)
+            shp = ShapelyPolygon(list(zip(vx, vy)))
+            union = shp if union is None else union.union(shp)
+        except Exception:
+            continue
+    if union is None:
+        return 0.0
+    total = shapely_env.area
+    if total <= 0:
+        return 0.0
+    return 100.0 * (1.0 - shapely_env.difference(union).area / total)
+
+
 def compute_corner_asso(poly, corners, env) -> dict:
     """For each concave corner compute the clipped angular visibility wedge."""
     asso = {}
@@ -281,6 +304,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
         scipy_g             = csgraph_from_dense(dense, null_value=-1)
         guards              = [tuple(_cached['KER_coords'][i])
                                for i in _cached['chosed_set']]
+        coverage_pct        = _coverage_pct(guards, shapely_env, env)
         palette             = sns.color_palette('husl', len(corners))
 
         if renderer:
@@ -573,12 +597,14 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
                 _vis_union = _vp if _vis_union is None else _vis_union.union(_vp)
             except Exception as _e:
                 print(f'[WARNING] Sanity: vis poly for KER[{pt_i}] failed: {_e}')
+        coverage_pct = 0.0
         if _vis_union is None:
             print('[WARNING] Sanity check: no visibility polygons computed.')
         else:
             _uncov = shapely_env.difference(_vis_union).area
             _total = shapely_env.area
             _pct   = 100.0 * (1.0 - _uncov / _total) if _total > 0 else 0.0
+            coverage_pct = _pct
             if _uncov < 1e-3 * _total:
                 print(f'[OK] Coverage sanity check passed: guard set covers '
                       f'{_pct:.4f}% of the environment '
@@ -718,6 +744,7 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
         skel_adj=skel_adj,
         skel_edges=skel_edges,
         guards=guards,
+        coverage_pct=coverage_pct,
     )
 
 

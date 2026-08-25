@@ -417,7 +417,7 @@ class Window(QMainWindow):
             self._show_prm = not self._show_prm
             print(f'[PRM-GRAPH] {"ON" if self._show_prm else "OFF"}')
         elif e.key() == Qt.Key_S:
-            _cycle = ['minmax-alpha', 'geo-follow', 'tsp-patrol']
+            _cycle = ['minmax-alpha', 'geo-follow', 'tsp-patrol', 'kernel-control']
             _i = _cycle.index(self._pursuer_strategy)
             self._pursuer_strategy = _cycle[(_i + 1) % len(_cycle)]
             self._strategy_obj = None   # rebuilt lazily for the new strategy
@@ -811,7 +811,25 @@ class Window(QMainWindow):
                 # Step roadmap pursuer
                 if self._roadmap_pursuer and self._roadmap_obs_pos is not None:
                     if self._pursuer_strategy == 'minmax-alpha':
-                        target = guard
+                        self._step_roadmap_pursuer(guard, data, dt)
+                    elif self._pursuer_strategy == 'kernel-control':
+                        from benchmark.kernel_pursuer import (
+                            KernelWeightedPursuer, gap_corners)
+                        ex_ = float(self.draggable_point_evader.x())
+                        ey_ = float(self.draggable_point_evader.y())
+                        if self._strategy_obj is None or \
+                                self._strategy_obj.name != self._pursuer_strategy:
+                            self._strategy_obj = KernelWeightedPursuer(
+                                data, (ex_, ey_), self._pursuer_speed)
+                            self._strategy_obj.pos = list(self._roadmap_obs_pos)
+                        self._strategy_obj.speed = self._pursuer_speed * dt
+                        px_, py_ = self._strategy_obj.step((ex_, ey_))
+                        self._roadmap_obs_pos = [px_, py_]
+                        self.draggable_point_observer = QPoint(int(px_), int(py_))
+                        for ci in gap_corners((px_, py_), data):
+                            gcx, gcy = data.poly[ci].x(), data.poly[ci].y()
+                            self._d_ring(gcx, gcy, 10, QColor(255, 120, 255, 200),
+                                        width=2)
                     else:
                         if self._strategy_obj is None or \
                                 self._strategy_obj.name != self._pursuer_strategy:
@@ -829,7 +847,7 @@ class Window(QMainWindow):
                         target = Point(tx_, ty_)
                         self._d_ring(tx_, ty_, 10, QColor(255, 120, 255, 200),
                                      width=2)
-                    self._step_roadmap_pursuer(target, data, dt)
+                        self._step_roadmap_pursuer(target, data, dt)
 
                 # Step free (autonomous) observer via PRM
                 elif self._auto_observer_pos is not None:
