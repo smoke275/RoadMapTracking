@@ -10,6 +10,7 @@ Controls:
   Drag CYAN dot    — cycle active corner
   A                — toggle auto-evader (Voronoi skeleton)
   P                — toggle roadmap pursuer
+  L                — toggle line-of-sight forecast (Φ score + escape path colouring)
   Esc              — quit
 """
 import sys

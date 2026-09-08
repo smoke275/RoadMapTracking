@@ -978,6 +978,46 @@ def compute_frame(ex: float, ey: float,
     )
 
 
+def sweep_max_alpha(data: SimulationData, shapely_polygon, grid_n: int = 25):
+    """Spatial worst case of the guard placement: place a virtual evader at
+    every interior point of a grid_n x grid_n grid over the polygon's bounding
+    box and evaluate compute_optimal_guard's opt_alpha there — the ratio
+    d_G(x, c) / d_geo(e, c) at the best patrol-edge position x for that evader
+    position, maximised over corners c. Returns (x, y, alpha, n_evaluated) for
+    the worst grid point, or None if no grid point lands inside the polygon.
+
+    Because opt_alpha is a raw distance ratio (weight 1 with gating off), it is
+    exactly the pursuer-to-evader speed ratio s_p/s_e needed for a pursuer
+    already at its optimal spot to reach the worst corner no later than the
+    evader. The max over the polygon is therefore the minimum speed ratio
+    that guarantees corner cutoff everywhere under an oracle (zero-transit)
+    pursuer — a lower bound on what any real, moving pursuer needs.
+
+    Unlike the trajectory-based benchmark metrics, this is exhaustive over
+    space rather than over the positions some evader model happens to visit.
+    Not thread-safe against concurrent compute_frame calls on the same data
+    (shared geodesic graph); callers in the GUI serialise it on the compute
+    pool.
+    """
+    minx, miny, maxx, maxy = shapely_polygon.bounds
+    best = None
+    n_evaluated = 0
+    for i in range(grid_n):
+        x = minx + (i + 0.5) * (maxx - minx) / grid_n
+        for j in range(grid_n):
+            y = miny + (j + 0.5) * (maxy - miny) / grid_n
+            if not shapely_polygon.contains(Point(x, y)):
+                continue
+            n_evaluated += 1
+            path_lengths = compute_path_lengths(x, y, data)
+            _, _, opt_alpha = compute_optimal_guard(path_lengths, data)
+            if best is None or opt_alpha > best[2]:
+                best = (x, y, float(opt_alpha))
+    if best is None:
+        return None
+    return best[0], best[1], best[2], n_evaluated
+
+
 def _opt_offset(path_lengths, v1_idx, v2_idx, data):
     """Re-derive the scalar offset along (v1→v2) for the optimal guard point
     (mirrors compute_optimal_guard with the same soft-gating)."""

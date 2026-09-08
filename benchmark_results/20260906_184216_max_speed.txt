@@ -1,0 +1,10 @@
+Polygon  Verts Corners Guards Grid pts min s_p/s_e    worst evader (x, y) paper 0.8 ok?
+---------------------------------------------------------------------------------------
+poly1       48      22      9      258       1.907         (-93.3, 222.7)            no
+poly2       47      23      9      264       1.677        (-198.2, 113.1)            no
+poly3       23      10      5      275       1.833        (100.3, -153.9)            no
+poly4       47      20      5      301       2.713         (-171.4, 36.6)            no
+poly8       60      29     13      208       1.738          (74.0, 129.1)            no
+poly9       39      17      7      286       1.682          (-71.4, 86.0)            no
+
+min s_p/s_e: max over the grid of the min-max alpha at each evader position (evader speed = 1, grid 25x25). "paper 0.8 ok?" compares against the s_p/s_e = 0.8 regime used in the experiments section — an oracle bound, so "no" means even a zero-transit pursuer cannot guarantee cutoff everywhere.

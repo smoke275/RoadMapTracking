@@ -17,7 +17,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QRect, QPoint, QTimer
 from PyQt5.QtGui import (QPainter, QBrush, QPen, QPolygon,
                           QColor, QFont, QTransform, QRadialGradient)
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QPushButton
 from enum import Enum, auto
 from shapely.geometry import LineString, Point
 
@@ -25,6 +25,7 @@ from config import BOUNDARY_X, BOUNDARY_Y, POINT_RADIUS, WINDOW_SIZE, EPSILON
 from geometry import interpolate_point
 from graph import dijkstra
 import ker_pipeline
+import los_score
 import visilibity as vis
 from skeleton import nearest_node as _skeleton_nearest_node
 from skeleton import skeleton_path as _skeleton_path
@@ -155,10 +156,86 @@ class Window(QMainWindow):
         self._dbg_dir_flips: int      = 0
         self._dbg_prev_move_vec       = None
 
+        # Worst-case (spatial max-alpha sweep) state
+        self._compute_pool       = None   # set by run(); shared with per-frame KER computation
+
+        # Line-of-sight forecast (L key): read-only score of the current
+        # route, computed on the same worker at whatever rate it allows.
+        self._show_los   = False
+        self._los_future = None
+        self._los_result = None
+        self._max_alpha_result   = None   # (x, y, alpha) of worst-case evader spot, or None
+
         self._init_window()
+
+        self._max_alpha_btn = QPushButton("Max α", self)
+        # Right edge, just above the bottom per-corner alpha strip: top-left
+        # has the guard/observer readout, top-right the legend, bottom-left
+        # the key toggles, and the full bottom row the alpha readout — this
+        # is the one spot (verified by render) that covers no data.
+        self._max_alpha_btn.setGeometry(WINDOW_SIZE - 100, WINDOW_SIZE - 90, 90, 28)
+        self._max_alpha_btn.clicked.connect(self._on_compute_max_alpha)
+        self._max_alpha_btn.show()
+        self._max_alpha_btn.raise_()
+
         timer = QTimer(self)
         timer.timeout.connect(self.update)
         timer.start(33)
+
+    def _on_compute_max_alpha(self):
+        """Sweep the evader across every interior grid point and report the
+        worst-case achievable-optimal alpha: even with the pursuer instantly
+        at its best guard position, how bad can the corner cutoff ratio get
+        anywhere in this polygon? See _sweep_max_alpha's docstring for why
+        this is a useful complement to the trajectory-based metrics.
+
+        Runs the sweep on the shared compute pool and polls for completion
+        via a QTimer rather than blocking this (Qt main) thread — measured
+        at ~120ms per grid point on a 17-corner polygon, a blocking wait
+        would freeze the whole window (repaints included) for tens of
+        seconds. grid_n=15 here trades resolution for a responsive-enough
+        interactive wait; pass a finer grid_n directly to _sweep_max_alpha
+        for offline analysis where a long blocking wait is acceptable."""
+        if self._data is None or self.shapely_polygon is None or self._compute_pool is None:
+            return
+        self._max_alpha_btn.setEnabled(False)
+        self._max_alpha_btn.setText("Computing…")
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        future = self._compute_pool.submit(ker_pipeline.sweep_max_alpha,
+                                           self._data, self.shapely_polygon, 15)
+
+        poll = QTimer(self)
+        poll.setInterval(150)
+
+        def _check():
+            if not future.done():
+                return
+            poll.stop()
+            QApplication.restoreOverrideCursor()
+            self._max_alpha_btn.setEnabled(True)
+            self._max_alpha_btn.setText("Max α")
+            try:
+                result = future.result()
+            except Exception as exc:
+                QMessageBox.warning(self, "Max α", f"Sweep failed: {exc}")
+                return
+            if result is None:
+                QMessageBox.warning(self, "Max α", "No interior sample points found.")
+                return
+            wx, wy, walpha, n_pts = result
+            self._max_alpha_result = (wx, wy, walpha)
+            QMessageBox.information(
+                self, "Worst-Case α",
+                f"Max achievable-optimal α over the polygon: {walpha:.3f}\n"
+                f"at evader position ({wx:.1f}, {wy:.1f})  [{n_pts} grid points]\n\n"
+                f"Equivalently: the pursuer needs s_p/s_e ≥ {walpha:.3f} to guarantee\n"
+                f"corner cutoff everywhere, even with zero transit time.\n\n"
+                f"(Best-case pursuer response at each spot — a spatial worst case,\n"
+                f"not a value observed along any one evader trajectory.)")
+
+        poll.timeout.connect(_check)
+        poll.start()
 
     def _init_window(self):
         self.setWindowTitle(self.title)
@@ -346,7 +423,7 @@ class Window(QMainWindow):
             elif op == Op.draw_text:
                 font = QFont("Consolas", cmd[3])
                 painter.setFont(font)
-                pos = QPoint(cmd[1], -cmd[2])
+                pos = QPoint(int(cmd[1]), -int(cmd[2]))
                 painter.save()
                 transform = QTransform()
                 transform.scale(1, -1)
@@ -422,6 +499,9 @@ class Window(QMainWindow):
             self._pursuer_strategy = _cycle[(_i + 1) % len(_cycle)]
             self._strategy_obj = None   # rebuilt lazily for the new strategy
             print(f'[STRATEGY] {self._pursuer_strategy}')
+        elif e.key() == Qt.Key_L:
+            self._show_los = not self._show_los
+            print(f'[LOS-FORECAST] {"ON" if self._show_los else "OFF"}')
         elif e.key() == Qt.Key_V:
             self._gating_enabled = not self._gating_enabled
             ker_pipeline.set_gating_enabled(self._gating_enabled)
@@ -568,6 +648,7 @@ class Window(QMainWindow):
 
         # ---- Async compute pool (double-buffer: render never blocks) ----
         _compute_pool   = ThreadPoolExecutor(max_workers=1, thread_name_prefix='ker_compute')
+        self._compute_pool = _compute_pool  # shared with the Max α button's sweep
         _compute_future = None
         _last_fc        = None
         _last_tick: float = time.monotonic()
@@ -647,6 +728,13 @@ class Window(QMainWindow):
                          cr + 3, QColor(0, 180, 200, 80), width=6)
             self._d_dot(data.poly[act].x(), data.poly[act].y(), cr, C_CORNER)
 
+            # ---- Worst-case α marker (from the Max α button) ------------
+            if self._max_alpha_result is not None:
+                wx, wy, walpha = self._max_alpha_result
+                self._d_ring(wx, wy, POINT_RADIUS + 6, QColor(255, 140, 0, 200), width=4)
+                self._d_dot(wx, wy, POINT_RADIUS, QColor(255, 140, 0))
+                self._d_text(wx + 14, wy + 14, f"max α={walpha:.2f}", size=12)
+
             # ---- KER frame computation (async double-buffer) ------------
             # If the background worker finished, harvest the result.
             if _compute_future is not None and _compute_future.done():
@@ -686,9 +774,48 @@ class Window(QMainWindow):
                     _bx, _by = fc.obs_to_guard_path[_si + 1]
                     self._d_glow_line(_ax, _ay, _bx, _by, C_SP_LINE, width=3)
 
+            # ---- LOS forecast (L key) -----------------------------------
+            # Scored on the same single worker as compute_frame, so it can
+            # never race it; refreshed whenever the worker is free. Speeds
+            # are the GUI's px/s converted to px per 30fps frame \u2014 only
+            # the ratio and the horizon matter to the score.
+            if self._show_los:
+                if self._los_future is not None and self._los_future.done():
+                    try:
+                        self._los_result = self._los_future.result()
+                    except Exception:
+                        pass
+                    self._los_future = None
+                if self._los_future is None:
+                    self._los_future = _compute_pool.submit(
+                        los_score.score_frame, fc, float(ex_), float(ey_), data,
+                        self._pursuer_speed / 30.0, self._evader_speed / 30.0, dt=2.0)
+                _res = self._los_result
+                if _res is not None:
+                    _pr = _res['profiles'][_res['worst_corner']]
+                    # Evader's escape to the worst corner: green where the
+                    # pursuer would see it, red where it would not.
+                    for _k in range(len(_pr.times) - 1):
+                        _a = _pr.evader_position(_pr.times[_k])
+                        _b = _pr.evader_position(_pr.times[_k + 1])
+                        _col = QColor(0, 230, 90, 220) if _pr.los[_k] else QColor(255, 60, 60, 230)
+                        self._d_line(_a[0], _a[1], _b[0], _b[1], _col, width=4)
+                    _wc = _res['worst_corner']
+                    self._d_ring(data.poly[_wc].x(), data.poly[_wc].y(), 14,
+                                 QColor(255, 60, 60, 160), width=3)
+            else:
+                self._los_result = None
+
             # ---- HUD overlay -------------------------------------------
             alpha_lines = '  '.join(f'\u03B1{i}={a:.2f}' for i, a in enumerate(fc.alphas))
             self._d_text(-490, -460, f'\u03B1 opt = {fc.opt_alpha:.4f}', size=14)
+            if self._show_los and self._los_result is not None:
+                _res = self._los_result
+                self._d_text(-250, -460,
+                             f'\u03A6 LOS = {_res["fitness"]:.2f}   '
+                             f'(worst: c{_res["worst_corner"]} {_res["worst"]:.2f})', size=14)
+            elif self._show_los:
+                self._d_text(-250, -460, '\u03A6 LOS = computing\u2026', size=14)
             self._d_text(-490, -490, alpha_lines, size=11)
             if self.auto_evader and self._roadmap_pursuer and self._roadmap_obs_pos is not None:
                 self._d_text(-490, 470, f'Observer roadmap ({ao_x:.0f},{ao_y:.0f})', size=11)
@@ -930,6 +1057,8 @@ class Window(QMainWindow):
             self._d_text(-490, -390, f'[G] PRM graph: {prm_label}', size=11)
             gating_label = 'ON' if self._gating_enabled else 'OFF'
             self._d_text(-490, -370, f'[V] vis-gating: {gating_label}', size=11)
+            los_label = 'ON' if self._show_los else 'OFF'
+            self._d_text(-490, -350, f'[L] LOS forecast: {los_label}', size=11)
 
             self.execute()
             time.sleep(0.016)   # cap sim-thread at ~60 fps; frees CPU for compute worker
