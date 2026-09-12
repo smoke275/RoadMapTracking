@@ -1,4 +1,5 @@
 """Evader behavior models for the headless benchmark harness."""
+from collections import deque
 import math
 
 import pyvisgraph as vg
@@ -16,9 +17,16 @@ class SkeletonEvader:
 
     Same segment-walking algorithm as the GUI's auto-evader (window.py),
     stripped of Qt state.
+
+    avoid_recent — remember this many past destinations and exclude them
+    (and their neighbours) when picking the next one. Without it the
+    "farthest node" rule ping-pongs between the same two spots (see
+    skeleton.pick_destination). 0 keeps the historical benchmark behaviour;
+    the GUI uses 3 like window.py.
     """
 
-    def __init__(self, skel_nodes, skel_adj, shapely_env, start_pos, speed):
+    def __init__(self, skel_nodes, skel_adj, shapely_env, start_pos, speed,
+                 avoid_recent: int = 0):
         self.nodes = skel_nodes
         self.adj = skel_adj
         self.env = shapely_env
@@ -27,6 +35,7 @@ class SkeletonEvader:
         self._path: list = []
         self._seg_idx = 0
         self._seg_pos = 0.0
+        self._dest_history = deque(maxlen=avoid_recent) if avoid_recent > 0 else None
 
     def step(self, dt: float, pursuer_alphas: dict = None):
         """Advance up to speed*dt along the skeleton. Returns new (x, y).
@@ -35,10 +44,13 @@ class SkeletonEvader:
         while budget > 0:
             if not self._path or self._seg_idx >= len(self._path) - 1:
                 cur = nearest_node(self.nodes, self.pos[0], self.pos[1])
-                dst = pick_destination(self.nodes, self.adj, cur)
+                dst = pick_destination(self.nodes, self.adj, cur,
+                                       avoid=self._dest_history)
                 new_path = skeleton_path(self.nodes, self.adj, cur, dst)
                 if not new_path or len(new_path) <= 1:
                     break
+                if self._dest_history is not None:
+                    self._dest_history.append(dst)
                 self._path = new_path
                 self._seg_idx = 0
                 self._seg_pos = 0.0

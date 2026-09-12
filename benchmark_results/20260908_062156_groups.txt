@@ -1,0 +1,7 @@
+Polygon   k min s_p/s_e       worst evader   groups (per-group worst alpha)
+---------------------------------------------------------------------------
+poly9     1       1.682      (-71.4, 86.0)   [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35] (1.68)
+poly9     2       1.481     (-71.4, 181.9)   [0, 2, 5, 6, 11, 12, 13, 17, 29, 30, 31, 34, 35] (1.48)  [18, 19, 24, 27] (1.01)
+poly9     3       1.481     (-71.4, 181.9)   [0, 2, 5, 6, 11, 12, 13, 17, 29, 30, 31, 34, 35] (1.48)  [18, 27] (0.29)  [19, 24] (0.00)
+
+min s_p/s_e: max over a 25x25 evader grid of the k-pursuer alpha (max over corner groups of that group's optimal alpha); evader speed = 1, zero-transit pursuers. Groups from LOS-overlap affinity (grid 10, step 5.0) (refined groupings from cache where available).

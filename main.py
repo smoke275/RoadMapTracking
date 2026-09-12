@@ -12,6 +12,9 @@ Controls:
   P                — toggle roadmap pursuer
   L                — toggle line-of-sight forecast (Φ score + escape path colouring)
   Esc              — quit
+
+With config.NUM_PURSUERS > 1 the k-pursuer window (multi_window.py) opens
+instead; see its docstring for that mode's controls.
 """
 import sys
 import argparse
@@ -19,6 +22,7 @@ import threading
 
 from PyQt5.QtWidgets import QApplication
 
+from config import NUM_PURSUERS
 from draw_polygon import draw_polygon, load_polygon
 from window import Window
 
@@ -46,7 +50,13 @@ def startup():
             return
 
     app    = QApplication([sys.argv[0]] + qt_args)
-    window = Window()
+    if NUM_PURSUERS > 1:
+        # k-pursuer tracking: corners partitioned into NUM_PURSUERS groups,
+        # one roadmap pursuer per group (see corner_groups.py).
+        from multi_window import MultiPursuitWindow
+        window = MultiPursuitWindow(NUM_PURSUERS)
+    else:
+        window = Window()
     thread = threading.Thread(
         target=window.run, args=(poly,),
         kwargs={'force_recompute': args.recompute},

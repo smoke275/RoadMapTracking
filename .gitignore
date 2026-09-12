@@ -7,3 +7,4 @@ pursuer_debug.log
 resources/ker_cache.pkl
 resources/ker_geodesic.graph
 resources/output.txt
+resources/corner_groups.pkl

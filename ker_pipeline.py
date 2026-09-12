@@ -844,13 +844,17 @@ def _get_node_vis_fracs(data: SimulationData) -> dict:
 
 
 def _edge_tent_store(v1: int, v2: int, elen: float,
-                      path_lengths: dict, _nf: dict, data: SimulationData) -> list:
+                      path_lengths: dict, _nf: dict, data: SimulationData,
+                      corners=None) -> list:
     """Build the per-corner weighted-tent (slope, intercept) entries for one
     patrol edge (v1, v2). Shared by compute_optimal_guard and _opt_offset so
     they can't silently diverge on the same edge's tent construction.
+
+    `corners` restricts the tents to a subset of data.corners — one pursuer's
+    responsibility in the multi-pursuer setting (see corner_groups.py).
     """
     store = []
-    for corn in data.corners:
+    for corn in (data.corners if corners is None else corners):
         lam    = _ALPHA_LAMBDA if _GATING_ENABLED else 0.0
         w1 = 1.0 - lam * _nf[v1][corn]
         w2 = 1.0 - lam * _nf[v2][corn]
@@ -895,10 +899,14 @@ def _edge_tent_store(v1: int, v2: int, elen: float,
     return store
 
 
-def compute_optimal_guard(path_lengths: dict, data: SimulationData):
+def compute_optimal_guard(path_lengths: dict, data: SimulationData, corners=None):
     """
     Find the patrol-edge position minimising max(weighted_distance_ratio) across corners.
     Returns (v1_idx, v2_idx, opt_alpha).
+
+    `corners` (optional) restricts the minimax to a subset of data.corners:
+    the problem is separable by corner, so a k-pursuer team with a corner
+    partition is k independent calls of this with each pursuer's group.
 
     Fix 1 (soft) — each corner's α_c is discounted by a visibility-area weight:
         α_c_w(x) = w_c(x) · d_G(x, c) / L_c
@@ -912,7 +920,7 @@ def compute_optimal_guard(path_lengths: dict, data: SimulationData):
     for edge in data.total_edges:
         v1, v2 = edge[0], edge[1]
         elen   = data.vertices[v1].distance(data.vertices[v2])
-        store  = _edge_tent_store(v1, v2, elen, path_lengths, _nf, data)
+        store  = _edge_tent_store(v1, v2, elen, path_lengths, _nf, data, corners)
         min_pt = process_functions(store, x_min=0, x_max=elen)
         edge_points.append((min_pt[0], min_pt[1], v1, v2))
 
@@ -953,15 +961,21 @@ def compute_alphas(ox_comp: float, oy_comp: float,
 
 def compute_frame(ex: float, ey: float,
                   ox_comp: float, oy_comp: float,
-                  data: SimulationData) -> FrameComputed:
-    """Run all per-frame pure computations and return a FrameComputed bundle."""
+                  data: SimulationData, corners=None,
+                  path_lengths: dict = None) -> FrameComputed:
+    """Run all per-frame pure computations and return a FrameComputed bundle.
+
+    `corners` restricts the guard optimisation to one pursuer's corner group;
+    `path_lengths` lets a caller that already computed the evader's geodesics
+    (e.g. once for several pursuers) pass them in instead of recomputing."""
     from geometry import interpolate_point
 
-    path_lengths = compute_path_lengths(ex, ey, data)
-    v1_idx, v2_idx, opt_alpha = compute_optimal_guard(path_lengths, data)
+    if path_lengths is None:
+        path_lengths = compute_path_lengths(ex, ey, data)
+    v1_idx, v2_idx, opt_alpha = compute_optimal_guard(path_lengths, data, corners)
 
     guard = interpolate_point(data.vertices[v1_idx], data.vertices[v2_idx],
-                              _opt_offset(path_lengths, v1_idx, v2_idx, data))
+                              _opt_offset(path_lengths, v1_idx, v2_idx, data, corners))
 
     alphas = compute_alphas(ox_comp, oy_comp, path_lengths, data)
     _, obs_to_guard_path = dijkstra(data.graph, (ox_comp, oy_comp),
@@ -1018,16 +1032,17 @@ def sweep_max_alpha(data: SimulationData, shapely_polygon, grid_n: int = 25):
     return best[0], best[1], best[2], n_evaluated
 
 
-def _opt_offset(path_lengths, v1_idx, v2_idx, data):
+def _opt_offset(path_lengths, v1_idx, v2_idx, data, corners=None):
     """Re-derive the scalar offset along (v1→v2) for the optimal guard point
-    (mirrors compute_optimal_guard with the same soft-gating)."""
+    (mirrors compute_optimal_guard with the same soft-gating and the same
+    optional corner subset)."""
     _nf = _get_node_vis_fracs(data)
 
     for edge in data.total_edges:
         if edge[0] == v1_idx and edge[1] == v2_idx:
             v1, v2 = edge[0], edge[1]
             elen   = data.vertices[v1].distance(data.vertices[v2])
-            store  = _edge_tent_store(v1, v2, elen, path_lengths, _nf, data)
+            store  = _edge_tent_store(v1, v2, elen, path_lengths, _nf, data, corners)
             min_pt = process_functions(store, x_min=0, x_max=elen)
             return min_pt[0]
     return 0.0
