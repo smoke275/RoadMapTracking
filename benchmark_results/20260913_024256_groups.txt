@@ -1,0 +1,13 @@
+Polygon   k Method                s*_k  Lambda   groups (per-group worst alpha)
+-------------------------------------------------------------------------------
+poly9     1 ILP min-speed        1.682   0.736   [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35] (1.68)
+poly9     1 ILP bound +10%       1.682   0.760   [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35] (1.68)
+poly9     1 ILP bound +25%       1.682   0.776   [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35] (1.68)
+poly9     2 ILP min-speed        1.134   0.795   [0, 2, 5, 11, 12, 13, 17, 30, 31] (1.13)  [6, 18, 19, 24, 27, 29, 34, 35] (1.08)
+poly9     2 ILP bound +10%       1.149   0.819   [0, 2, 5, 11, 18, 19, 24, 27] (1.10)  [6, 12, 13, 17, 29, 30, 31, 34, 35] (1.15)
+poly9     2 ILP bound +25%       1.481   0.838   [0, 6, 18, 19, 24, 27] (1.05)  [2, 5, 11, 12, 13, 17, 29, 30, 31, 34, 35] (1.48)
+poly9     3 ILP min-speed        1.004   0.777   [0, 2, 5, 11, 17] (0.84)  [6, 12, 13, 18, 30, 31, 34, 35] (0.85)  [19, 24, 27, 29] (1.00)
+poly9     3 ILP bound +10%       1.008   0.853   [0, 5, 11] (0.55)  [18, 19, 24, 27, 29] (1.01)  [2, 6, 12, 13, 17, 30, 31, 34, 35] (0.82)
+poly9     3 ILP bound +25%       1.134   0.861   [0, 2, 5, 11, 12, 30, 35] (1.13)  [18, 19, 24, 27] (1.01)  [6, 13, 17, 29, 31, 34] (1.01)
+
+s*_k: max over a 25x25 evader grid of the k-pursuer alpha (max over groups of that group's optimal alpha); evader speed = 1, zero-transit pursuers. Lambda: nearness-weighted fraction of (evader position, corner) pairs whose pursuer keeps line of sight for the whole escape from its chosen position (ILP grid 8x8, positions every 15.0 units).

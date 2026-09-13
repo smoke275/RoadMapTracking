@@ -282,34 +282,54 @@ def get_affinity(data, grid_n: int, step: float, force: bool = False,
     return aff, road
 
 
-def load_refined(data, grid_n: int, step: float, k: int):
-    """Groups saved by save_refined for this polygon/params/k, or None."""
+# Partition sources, in order of preference when the GUI asks for k groups:
+#   'ilp'      exact optimum from partition_ilp.py (run_groups.py, default)
+#   'refined'  heuristic clustering + local search (run_groups.py --method heuristic --refine)
+#   raw        heuristic clustering alone, computed on the spot
+_METHOD_ORDER = ('ilp', 'refined')
+
+
+def load_partition(data, grid_n: int, step: float, k: int, methods=_METHOD_ORDER):
+    """(method, groups) saved by save_partition for this polygon and k, first
+    available in `methods` order, or (None, None)."""
     entry = _load_cache().get(_cache_key(data, grid_n, step))
-    if entry and k in entry.get('refined', {}):
-        return entry['refined'][k]
-    return None
+    if entry:
+        for m in methods:
+            if k in entry.get(m, {}):
+                return m, entry[m][k]
+    return None, None
 
 
-def save_refined(data, grid_n: int, step: float, k: int, groups: list):
-    """Persist a refined grouping (run_groups.py --refine) so the GUI can use
-    it instead of the raw clustering."""
+def save_partition(data, grid_n: int, step: float, k: int, groups: list,
+                   method: str = 'refined'):
+    """Persist a partition so the GUI can use it instead of the raw clustering."""
     key = _cache_key(data, grid_n, step)
     blob = _load_cache()
     entry = blob.setdefault(key, {})
-    entry.setdefault('refined', {})[k] = [list(g) for g in groups]
+    entry.setdefault(method, {})[k] = [list(g) for g in groups]
     _save_cache(blob)
+
+
+# Backwards-compatible names
+def load_refined(data, grid_n, step, k):
+    return load_partition(data, grid_n, step, k, methods=('refined',))[1]
+
+
+def save_refined(data, grid_n, step, k, groups):
+    save_partition(data, grid_n, step, k, groups, method='refined')
 
 
 def make_grouping(data, k: int, grid_n: int, step: float,
                   force: bool = False, progress=None,
                   use_refined: bool = True) -> Grouping:
-    """Cluster the corners into k groups. If run_groups.py --refine has
-    stored a refined grouping for this polygon and k, prefer it."""
+    """Return k corner groups: a stored partition (ILP optimum preferred,
+    then the refined heuristic) if run_groups.py has produced one for this
+    polygon and k, else the raw affinity clustering."""
     aff, road = get_affinity(data, grid_n, step, force=force, progress=progress)
-    refined = load_refined(data, grid_n, step, k) if use_refined else None
-    if refined is not None:
-        print(f'[GROUPS] using refined grouping for k={k} from cache.')
-        groups = [sorted(g) for g in refined]
+    method, stored = load_partition(data, grid_n, step, k) if use_refined else (None, None)
+    if stored is not None:
+        print(f'[GROUPS] using stored {method} partition for k={k}.')
+        groups = [sorted(g) for g in stored]
     else:
         groups = cluster_corners(aff, road, list(data.corners), k)
     return Grouping(k=len(groups), groups=groups, affinity=aff, road_dist=road)

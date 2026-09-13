@@ -158,6 +158,8 @@ class MultiPursuitWindow(Window):
         self._grouping = grouping
         groups = grouping.groups
         print(f'[GROUPS] k={grouping.k}: {groups}')
+        print('[GROUPS] (run `python run_groups.py --k N` once per polygon to store the '
+              'exact ILP partition; otherwise the affinity clustering is used)')
 
         # ---- Interactive state ------------------------------------------
         evader_pt = Point(0, 0)

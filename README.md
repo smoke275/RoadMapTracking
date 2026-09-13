@@ -155,14 +155,15 @@ No pursuer. Drag the red dot to place the evader, click a reflex corner (or pres
 
 Set `NUM_PURSUERS = k` in `config.py` and run `python main.py` as usual; with `k > 1` the k-pursuer window (`multi_window.py`) opens instead of the single-pursuer demo.
 
-**Method.** The minimax guard optimisation is separable by corner, so partitioning the reflex corners into `k` groups turns the problem into `k` independent single-pursuer problems on the shared roadmap. Corners are grouped by a *line-of-sight overlap affinity*: for many evader positions, the length of roadmap from which a single pursuer could keep sight of the evader whichever of two corners it escapes to (the intersection of the two corners' trace results above), averaged over an evader grid. Agglomerative clustering on that affinity gives the groups; each pursuer then chases its own group's optimal guard point with the usual stable-node controller. See `corner_groups.py`.
+**Method.** The minimax guard optimisation is separable by corner, so partitioning the reflex corners into `k` groups turns the problem into `k` independent single-pursuer problems on the shared roadmap. The partition is chosen by an exact mixed-integer program (`partition_ilp.py`, solved with scipy's HiGHS): it assigns corners to pursuers and, for every evader grid position, a roadmap position to each pursuer, minimising the team critical speed ratio and then, at that bound, maximising the fraction of escapes the responsible pursuer keeps in line of sight from where it stands. Relaxing the speed bound traces the speed/sight Pareto front. A clustering heuristic (`corner_groups.py`: co-visibility affinity from the trace tool above + average-linkage clustering + local search) is kept as a comparison point and as the fallback for instances too large to solve exactly.
 
 ```bash
-python run_groups.py --polygons poly9 --k 1 2 3 4       # oracle speed ratio vs. k
-python run_groups.py --polygons poly9 --k 2 3 --refine  # local-search the grouping
-python run_groups.py --show-affinity                    # print the corner-pair table
+python run_groups.py --polygons poly9 --k 1 2 3                 # exact ILP, stores the partition
+python run_groups.py --polygons poly9 --k 2 3 --relax 0.1 0.25  # extra Pareto points
+python run_groups.py --method heuristic --refine                # clustering + local search
+python run_groups.py --method heuristic --raw --show-affinity   # raw clustering, affinity table
 ```
 
-The raw clustering tends to peel off small, well-separated groups and leave one large group that dominates the worst case; `--refine` moves corners between groups whenever that lowers the worst-case alpha and saves the result, which the GUI then uses automatically for that polygon and `k`. Affinities and refined groupings are cached in `resources/corner_groups.pkl`.
+Stored partitions live in `resources/corner_groups.pkl`; the GUI prefers the ILP partition, then a refined heuristic one, then raw clustering computed on the spot.
 
 Window controls: drag the red dot (evader), `A` auto-evader, `P` freeze/unfreeze pursuers, `V` visibility polygons, `R` respawn pursuers at their guards, `Esc` quit. The HUD shows *team α\** (what `k` zero-transit pursuers would achieve for this evader position) and *achieved α* (max over corners of the best pursuer's actual distance ratio).
