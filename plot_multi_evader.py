@@ -38,11 +38,13 @@ def main():
 
     ax = axes[0]
     for k in ks:
-        ys = [next(r['max'] for r in oracle if r['k'] == k and r['m'] == m) for m in ms]
-        ax.plot(ms, ys, 'o-', color=COLOURS.get(k, 'k'), label=f'$k={k}$', ms=4)
+        p95 = [next(r['p95'] for r in oracle if r['k'] == k and r['m'] == m) for m in ms]
+        mean = [next(r['mean'] for r in oracle if r['k'] == k and r['m'] == m) for m in ms]
+        ax.plot(ms, p95, 'o-', color=COLOURS.get(k, 'k'), label=f'$k={k}$', ms=4)
+        ax.plot(ms, mean, 's:', color=COLOURS.get(k, 'k'), ms=3, lw=1)
     ax.axhline(1.0, color='0.6', lw=0.8, ls='--')
-    ax.set_xlabel('evaders $m$'); ax.set_ylabel('$s^\\star_{k,m}$')
-    ax.set_title('oracle speed ratio', fontsize=8)
+    ax.set_xlabel('evaders $m$'); ax.set_ylabel('oracle team $\\alpha$')
+    ax.set_title('oracle: 95th pct (solid), mean (dotted)', fontsize=8)
     ax.set_xticks(ms); ax.legend(frameon=False)
 
     if trials:

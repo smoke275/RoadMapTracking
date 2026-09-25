@@ -7,8 +7,11 @@ L_c = min_j d_geo(e_j, c) of corner_groups.compute_path_lengths_multi:
 
   oracle   critical speed ratio s*_{k,m}: the worst, over sampled m-evader
            configurations, of the team alpha (max over groups of the group's
-           optimal alpha). m = 1 uses the 25x25 interior grid of the paper's
-           Table; m >= 2 uses --configs random configurations (seeded).
+           optimal alpha). Configurations are uniform in the polygon with
+           every evader at least a standoff from every corner (alpha diverges
+           as an evader reaches a corner; the standoff defaults to the 25x25
+           grid's own minimum so m = 1 is comparable to the paper's grid
+           sweep). Also reports the 95th percentile and mean.
   trials   T-frame simulations: pursuers spawn at their guards, evaders
            wander the Voronoi skeleton (SkeletonEvader with destination
            memory), pursuers drive toward their per-frame guards with the
@@ -49,15 +52,33 @@ from pursuer_motion import StableNodeController
 # ---------------------------------------------------------------------------
 # Oracle speed ratio over sampled evader configurations
 # ---------------------------------------------------------------------------
-def sample_configs(data, m: int, n: int, seed: int = 0) -> list:
-    rng = random.Random(seed)
+def grid_standoff(data, grid_n: int = 25) -> float:
+    """Smallest distance from any point of the grid_n x grid_n interior grid
+    to any reflex corner. alpha_c -> infinity as an evader approaches c, so
+    the grid's spacing implicitly bounds the single-evader sweep; sampled
+    configurations must respect the same bound to be comparable."""
+    best = math.inf
+    for x, y in evader_grid(data, grid_n):
+        for c in data.corners:
+            best = min(best, math.hypot(x - data.poly[c].x(), y - data.poly[c].y()))
+    return best
+
+
+def sample_configs(data, m: int, n: int, seed: int = 0, standoff: float = 0.0) -> list:
+    """n configurations of m evaders uniform in the polygon, each evader at
+    least `standoff` from every reflex corner (rejection sampling)."""
     state = random.getstate()
     random.seed(seed)
     try:
         out = []
-        for _ in range(n):
-            out.append([(p.x, p.y) for p in
-                        (get_random_point_in_polygon(data.shapely_env) for _ in range(m))])
+        while len(out) < n:
+            evs = []
+            while len(evs) < m:
+                p = get_random_point_in_polygon(data.shapely_env)
+                if all(math.hypot(p.x - data.poly[c].x(), p.y - data.poly[c].y()) >= standoff
+                       for c in data.corners):
+                    evs.append((p.x, p.y))
+            out.append(evs)
         return out
     finally:
         random.setstate(state)
@@ -135,7 +156,10 @@ def main():
     ap.add_argument('--polygons', nargs='+', default=['poly9'])
     ap.add_argument('--k', nargs='+', type=int, default=[1, 2, 3])
     ap.add_argument('--m', nargs='+', type=int, default=[1, 2, 3])
-    ap.add_argument('--configs', type=int, default=400, help='Sampled evader configurations (m >= 2)')
+    ap.add_argument('--configs', type=int, default=400, help='Sampled evader configurations per m')
+    ap.add_argument('--standoff', type=float, default=None,
+                    help='Min evader-to-corner distance in sampled configurations '
+                         '(default: the 25x25 grid\'s own minimum)')
     ap.add_argument('--seeds', type=int, default=20)
     ap.add_argument('--frames', type=int, default=600)
     ap.add_argument('--sp', type=float, default=0.8)
@@ -154,13 +178,14 @@ def main():
             print(f'  k={k} partition: {g}', flush=True)
 
         # ---- oracle ---------------------------------------------------
+        standoff = args.standoff if args.standoff is not None else grid_standoff(data, 25)
+        print(f'  corner standoff for sampled configurations: {standoff:.1f} units', flush=True)
         for m in args.m:
             t0 = time.time()
-            configs = ([[p] for p in evader_grid(data, 25)] if m == 1
-                       else sample_configs(data, m, args.configs))
+            configs = sample_configs(data, m, args.configs, standoff=standoff)
             for k in args.k:
                 o = oracle_speed(data, groups_by_k[k], configs)
-                results['oracle'].append({'polygon': name, 'k': k, 'm': m, **o})
+                results['oracle'].append({'polygon': name, 'k': k, 'm': m, 'standoff': standoff, **o})
                 print(f'  oracle k={k} m={m}: s*={o["max"]:.3f}  p95={o["p95"]:.3f}  '
                       f'mean={o["mean"]:.3f}  ({o["n"]} configs, {time.time() - t0:.0f}s)', flush=True)
 
@@ -196,8 +221,9 @@ def main():
             f = lambda key: f'{r[key][0]:.2f}±{r[key][1]:.2f}'
             lines.append(f'{r["polygon"]:<8} {r["k"]:>2} {r["m"]:>2} {f("mean_alpha"):>13} '
                          f'{f("peak_alpha"):>13} {f("in_view_pct"):>13}% {f("n_breach"):>11}')
-    lines += ['', f'oracle: worst team alpha over {args.configs} sampled m-evader configurations '
-                  f'(m=1: 25x25 grid), L_c = min over evaders; trials: {args.seeds} seeds x '
+    lines += ['', f'oracle: worst / p95 / mean team alpha over {args.configs} sampled m-evader '
+                  f'configurations (corner standoff as printed), L_c = min over evaders; '
+                  f'trials: {args.seeds} seeds x '
                   f'{args.frames} frames, s_p={args.sp}, s_e={args.se}, skeleton evaders.']
     table = '\n'.join(lines)
     print('\n' + table)

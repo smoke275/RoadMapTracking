@@ -176,3 +176,10 @@ python multi_evader.py --skip-draw -k 3 -m 3 --auto
 
 `k` pursuers and `m` evaders (defaults `NUM_PURSUERS` / `NUM_EVADERS` in `config.py`). Pursuers guard corners, not evaders: each reflex corner is scored against the evader that can reach it first, `L_c = min_j d_geo(e_j, c)`, and every pursuer runs the unchanged single-evader optimiser on its corner group, so no run-time assignment is needed and any `k`/`m` combination works. Drag any red dot to move that evader, `A` sets them all wandering, `N` toggles the links showing which evader defines each corner. The HUD reports each evader's own worst corner alpha and whether any pursuer currently sees it.
 
+```bash
+python run_multi_evader.py --polygons poly9 --k 1 2 3 --m 1 2 3 --seeds 20 --frames 600
+python plot_multi_evader.py benchmark_results/<stamp>_multi_evader.json --out multi_evader.pdf
+```
+
+Headless evaluation: the oracle team alpha over sampled evader configurations (max, 95th percentile, mean, with a corner standoff since alpha diverges as an evader reaches a corner) and 600-frame trials recording the achieved alpha, the fraction of evaders in view of at least one pursuer, and breaches. Results go to `benchmark_results/`; the plot script draws the three-panel figure used in the paper.
+
