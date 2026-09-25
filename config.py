@@ -24,3 +24,6 @@ GROUP_AFFINITY_GRID = 10
 # Sampling step (world units) along each escape path when tracing visibility.
 GROUP_TRACE_STEP = 5.0
 GROUPS_FILE = os.path.join(_SCRIPT_DIR, 'resources', 'corner_groups.pkl')
+# Number of evaders for multi_evader.py (each corner is scored against the
+# evader nearest to it, so any k pursuers / m evaders combination works).
+NUM_EVADERS = 2

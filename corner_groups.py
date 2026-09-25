@@ -29,7 +29,7 @@ semantics as ker_pipeline.sweep_max_alpha). refine_groups does a greedy
 local search moving one corner at a time between groups when that lowers
 the worst case.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 import os
 import pickle
@@ -348,11 +348,28 @@ def format_affinity(g: Grouping, corners: list) -> str:
 # ---------------------------------------------------------------------------
 @dataclass
 class MultiFrame:
-    path_lengths: dict
+    path_lengths: dict    # corner -> L_c = min over evaders of geodesic distance
     frames: list          # FrameComputed per group (guard, opt alpha, route)
     combined_alphas: dict # corner -> min over pursuers of d_G(p_i, c) / L_c
     team_opt_alpha: float # max over groups of group opt alpha (oracle)
     achieved_alpha: float # max over corners of combined_alphas (actual positions)
+    evaders: list = field(default_factory=list)          # [(x, y), ...]
+    per_evader_pl: list = field(default_factory=list)    # path_lengths dict per evader
+    nearest_evader: dict = field(default_factory=dict)   # corner -> index of the evader defining L_c
+
+
+def compute_path_lengths_multi(evaders: list, data) -> tuple:
+    """Nearest-evader geodesics. For m evaders the pursuer must beat the one
+    that can reach each corner first, so L_c = min_j d_geo(e_j, c) and the
+    single-evader optimiser applies unchanged. Returns
+    (path_lengths, per_evader, nearest) with per_evader[j] the j-th evader's
+    own dict and nearest[c] the index attaining the minimum."""
+    per_evader = [compute_path_lengths(x, y, data) for x, y in evaders]
+    pl, nearest = {}, {}
+    for c in data.corners:
+        j = min(range(len(evaders)), key=lambda j: per_evader[j][c])
+        pl[c], nearest[c] = per_evader[j][c], j
+    return pl, per_evader, nearest
 
 
 def _alphas_at(pos, path_lengths, data) -> dict:
@@ -376,10 +393,13 @@ def _alphas_at(pos, path_lengths, data) -> dict:
             for c in data.corners}
 
 
-def compute_frame_multi(ex: float, ey: float, positions: list, data,
-                        groups: list) -> MultiFrame:
-    """One evader, k pursuers at `positions`, corner partition `groups`."""
-    pl = compute_path_lengths(ex, ey, data)
+def compute_frame_multi(ex, ey, positions: list, data, groups: list) -> MultiFrame:
+    """k pursuers at `positions`, corner partition `groups`, and either one
+    evader (ex, ey as floats) or several (ex = [(x, y), ...], ey ignored).
+    With several evaders each corner uses its nearest one (see
+    compute_path_lengths_multi); everything else is the single-evader path."""
+    evaders = list(ex) if isinstance(ex, (list, tuple)) else [(float(ex), float(ey))]
+    pl, per_evader, nearest = compute_path_lengths_multi(evaders, data)
     frames = []
     for (px, py), g in zip(positions, groups):
         v1, v2, a = compute_optimal_guard(pl, data, corners=g)
@@ -398,4 +418,7 @@ def compute_frame_multi(ex: float, ey: float, positions: list, data,
         combined_alphas=combined,
         team_opt_alpha=max(f.opt_alpha for f in frames),
         achieved_alpha=max(finite) if finite else math.inf,
+        evaders=evaders,
+        per_evader_pl=per_evader,
+        nearest_evader=nearest,
     )

@@ -167,3 +167,12 @@ python run_groups.py --method heuristic --raw --show-affinity   # raw clustering
 Stored partitions live in `resources/corner_groups.pkl`; the GUI prefers the ILP partition, then a refined heuristic one, then raw clustering computed on the spot.
 
 Window controls: drag the red dot (evader), `A` auto-evader, `P` freeze/unfreeze pursuers, `V` visibility polygons, `R` respawn pursuers at their guards, `Esc` quit. The HUD shows *team α\** (what `k` zero-transit pursuers would achieve for this evader position) and *achieved α* (max over corners of the best pursuer's actual distance ratio).
+
+## Multiple evaders
+
+```bash
+python multi_evader.py --skip-draw -k 3 -m 3 --auto
+```
+
+`k` pursuers and `m` evaders (defaults `NUM_PURSUERS` / `NUM_EVADERS` in `config.py`). Pursuers guard corners, not evaders: each reflex corner is scored against the evader that can reach it first, `L_c = min_j d_geo(e_j, c)`, and every pursuer runs the unchanged single-evader optimiser on its corner group, so no run-time assignment is needed and any `k`/`m` combination works. Drag any red dot to move that evader, `A` sets them all wandering, `N` toggles the links showing which evader defines each corner. The HUD reports each evader's own worst corner alpha and whether any pursuer currently sees it.
+
