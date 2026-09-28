@@ -1,0 +1,133 @@
+=== poly1 ===
+Corners: [1, 2, 4, 5, 8, 11, 14, 15, 16, 19, 22, 25, 26, 27, 30, 33, 34, 35, 38, 41, 43, 44]
+KER coverage computed in 0.37s
+Total: 22 corners — [1, 2, 4, 5, 8, 11, 14, 15, 16, 19, 22, 25, 26, 27, 30, 33, 34, 35, 38, 41, 43, 44]
+[INFO] ILP cover: 9/1534 candidates (14 after domination pre-processing).
+Set cover solved in 0.006s (9 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 382.94it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 414 nodes, 406 edges
+  min s_p/s_e = 1.907 at (-93.3, 222.7)  [258 pts, 85s]
+=== poly2 ===
+Corners: [2, 3, 6, 7, 10, 11, 12, 14, 17, 18, 22, 23, 25, 28, 29, 32, 33, 34, 38, 39, 41, 44, 46]
+KER coverage computed in 0.81s
+Total: 23 corners — [2, 3, 6, 7, 10, 11, 12, 14, 17, 18, 22, 23, 25, 28, 29, 32, 33, 34, 38, 39, 41, 44, 46]
+[INFO] ILP cover: 9/2249 candidates (16 after domination pre-processing).
+Set cover solved in 0.006s (9 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 392.74it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 802.8612 sq units uncovered (0.5751% of total area 139598.00).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 411 nodes, 391 edges
+  min s_p/s_e = 1.677 at (-198.2, 113.1)  [264 pts, 90s]
+=== poly3 ===
+Corners: [0, 1, 4, 8, 9, 12, 13, 16, 17, 20]
+KER coverage computed in 0.03s
+Total: 10 corners — [0, 1, 4, 8, 9, 12, 13, 16, 17, 20]
+[INFO] ILP cover: 5/360 candidates (5 after domination pre-processing).
+Set cover solved in 0.001s (5 guards selected)
+  0%|          | 0/3 [00:00<?, ?it/s]100%|██████████| 3/3 [00:00<00:00, 728.30it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 378 nodes, 352 edges
+  min s_p/s_e = 1.833 at (100.3, -153.9)  [275 pts, 10s]
+=== poly4 ===
+Corners: [1, 3, 6, 9, 13, 17, 19, 22, 25, 28, 30, 32, 33, 34, 38, 39, 40, 42, 44, 46]
+KER coverage computed in 0.70s
+Total: 20 corners — [1, 3, 6, 9, 13, 17, 19, 22, 25, 28, 30, 32, 33, 34, 38, 39, 40, 42, 44, 46]
+[INFO] ILP cover: 5/2784 candidates (15 after domination pre-processing).
+Set cover solved in 0.012s (5 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 392.80it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 1502.4421 sq units uncovered (1.1435% of total area 131386.77).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 430 nodes, 407 edges
+  min s_p/s_e = 2.713 at (-171.4, 36.6)  [301 pts, 36s]
+=== poly5 ===
+Corners: [1, 3, 6, 9, 10, 11, 16, 17, 18, 21, 24, 25, 26, 29, 32, 33, 34]
+KER coverage computed in 0.23s
+Total: 17 corners — [1, 3, 6, 9, 10, 11, 16, 17, 18, 21, 24, 25, 26, 29, 32, 33, 34]
+[INFO] ILP cover: 8/1135 candidates (12 after domination pre-processing).
+Set cover solved in 0.006s (8 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 511.54it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 411 nodes, 401 edges
+  min s_p/s_e = 1.945 at (72.6, -169.0)  [271 pts, 59s]
+=== poly6 ===
+Corners: [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+KER coverage computed in 0.20s
+Total: 17 corners — [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+[INFO] ILP cover: 7/996 candidates (9 after domination pre-processing).
+Set cover solved in 0.002s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 475.99it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 11007.5397 sq units uncovered (2.8115% of total area 391517.94).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 403 nodes, 393 edges
+  min s_p/s_e = 2.168 at (-74.3, -92.4)  [333 pts, 65s]
+=== poly7 ===
+Corners: [3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 28, 29]
+KER coverage computed in 0.06s
+Total: 12 corners — [3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 28, 29]
+[INFO] ILP cover: 7/526 candidates (7 after domination pre-processing).
+Set cover solved in 0.001s (7 guards selected)
+  0%|          | 0/4 [00:00<?, ?it/s]100%|██████████| 4/4 [00:00<00:00, 624.04it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 8542.5000 sq units uncovered (2.3594% of total area 362062.34).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 376 nodes, 352 edges
+  min s_p/s_e = 1.418 at (-28.1, -78.1)  [250 pts, 30s]
+=== poly8 ===
+Corners: [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+KER coverage computed in 0.62s
+Total: 29 corners — [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+[INFO] ILP cover: 13/1716 candidates (15 after domination pre-processing).
+Set cover solved in 0.004s (13 guards selected)
+  0%|          | 0/7 [00:00<?, ?it/s]100%|██████████| 7/7 [00:00<00:00, 290.79it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 5532.6779 sq units uncovered (4.3617% of total area 126847.09).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 393 nodes, 379 edges
+  min s_p/s_e = 1.738 at (74.0, 129.1)  [208 pts, 109s]
+=== poly9 ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.29s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.006s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 513.35it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  min s_p/s_e = 1.682 at (-71.4, 86.0)  [286 pts, 41s]
+
+Polygon  Verts Corners Guards Grid pts min s_p/s_e    worst evader (x, y) paper 0.8 ok?
+---------------------------------------------------------------------------------------
+poly1       48      22      9      258       1.907         (-93.3, 222.7)            no
+poly2       47      23      9      264       1.677        (-198.2, 113.1)            no
+poly3       23      10      5      275       1.833        (100.3, -153.9)            no
+poly4       47      20      5      301       2.713         (-171.4, 36.6)            no
+poly5       38      17      8      271       1.945         (72.6, -169.0)            no
+poly6       39      17      7      333       2.168         (-74.3, -92.4)            no
+poly7       30      12      7      250       1.418         (-28.1, -78.1)            no
+poly8       60      29     13      208       1.738          (74.0, 129.1)            no
+poly9       39      17      7      286       1.682          (-71.4, 86.0)            no
+
+min s_p/s_e: max over the grid of the min-max alpha at each evader position (evader speed = 1, grid 25x25). "paper 0.8 ok?" compares against the s_p/s_e = 0.8 regime used in the experiments section — an oracle bound, so "no" means even a zero-transit pursuer cannot guarantee cutoff everywhere.
+
+[SAVED] /app/benchmark_results/20260927_232226_max_speed.txt

@@ -8,7 +8,7 @@ POINT_RADIUS = 8
 WINDOW_SIZE  = 750
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-FILE_NAME   = os.path.join(_SCRIPT_DIR, 'resources', 'sites_poly9.csv')
+FILE_NAME   = os.path.join(_SCRIPT_DIR, 'resources', 'sites_poly7.csv')
 CACHE_FILE  = os.path.join(_SCRIPT_DIR, 'resources', 'ker_cache.pkl')
 GEO_FILE    = os.path.join(_SCRIPT_DIR, 'resources', 'ker_geodesic.graph')
 
@@ -17,7 +17,7 @@ GEO_FILE    = os.path.join(_SCRIPT_DIR, 'resources', 'ker_geodesic.graph')
 # the reflex corners into that many groups (clustered on how often two
 # corners' escapes can be watched from the same roadmap spot) and gives each
 # group its own pursuer.
-NUM_PURSUERS = 2
+NUM_PURSUERS = 1
 # Evader-grid resolution per axis used to average the corner-pair overlap
 # affinity (see corner_groups.corner_affinity). Coarser = faster startup.
 GROUP_AFFINITY_GRID = 10

@@ -1,0 +1,9 @@
+# polygons=['poly8'] strategies=['minmax-alpha', 'geo-follow', 'tsp-patrol'] evaders=['skeleton', 'adversarial'] seeds=50 frames=600 sp=0.8 se=1.0 workers=22 sequential=False
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly8        Min-Max α-Guard (Proposed)   Skeleton Evader         4.17±2.09  15.75±10.87 65.14±19.99%     0.0±0.1
+poly8        Geo-Follow                   Skeleton Evader         4.17±2.10  15.26±10.53 64.98±23.77%     0.0±0.0
+poly8        TSP-Patrol                   Skeleton Evader         8.91±3.58  37.77±29.10 25.01±19.53%     0.0±0.1
+poly8        Min-Max α-Guard (Proposed)   Adversarial Evader    59.30±56.92 219.09±121.42 93.66±12.66%     4.0±1.7
+poly8        Geo-Follow                   Adversarial Evader    42.57±26.80 197.27±92.01 94.39±11.96%    16.1±52.2
+poly8        TSP-Patrol                   Adversarial Evader   392.08±178.31 803.73±213.82 33.64±18.86%     2.1±1.2

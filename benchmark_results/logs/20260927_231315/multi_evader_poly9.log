@@ -1,0 +1,65 @@
+=== poly9 ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.31s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.011s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 471.91it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=1.
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=2.
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=3.
+  k=1 partition: [[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]
+  k=2 partition: [[0, 2, 5, 11, 12, 13, 17, 30, 31], [6, 18, 19, 24, 27, 29, 34, 35]]
+  k=3 partition: [[0, 2, 5, 11, 17], [6, 12, 13, 18, 30, 31, 34, 35], [19, 24, 27, 29]]
+  corner standoff for sampled configurations: 2.1 units
+  oracle k=1 m=1: s*=1.554  p95=1.274  mean=0.920  (300 configs, 45s)
+  oracle k=2 m=1: s*=1.145  p95=1.047  mean=0.771  (300 configs, 94s)
+  oracle k=3 m=1: s*=0.969  p95=0.919  mean=0.665  (300 configs, 149s)
+  oracle k=1 m=2: s*=21.386  p95=4.535  mean=2.071  (300 configs, 51s)
+  oracle k=2 m=2: s*=4.928  p95=2.825  mean=1.385  (300 configs, 106s)
+  oracle k=3 m=2: s*=4.914  p95=2.394  mean=1.169  (300 configs, 167s)
+  oracle k=1 m=3: s*=22.652  p95=6.179  mean=3.095  (300 configs, 55s)
+  oracle k=2 m=3: s*=8.917  p95=3.528  mean=1.918  (300 configs, 114s)
+  oracle k=3 m=3: s*=8.809  p95=3.112  mean=1.577  (300 configs, 179s)
+  trials 10/450 (123s)
+  trials 20/450 (152s)
+  trials 30/450 (230s)
+  trials 40/450 (303s)
+  trials 50/450 (349s)
+  trials 60/450 (462s)
+  trials 70/450 (474s)
+  trials 80/450 (557s)
+  trials 90/450 (637s)
+  trials 100/450 (657s)
+  trials 110/450 (780s)
+  trials 120/450 (825s)
+  trials 130/450 (922s)
+  trials 140/450 (999s)
+  trials 150/450 (1040s)
+  trials 160/450 (1113s)
+  trials 170/450 (1184s)
+  trials 180/450 (1240s)
+  trials 190/450 (1341s)
+  trials 200/450 (1384s)
+  trials 210/450 (1466s)
+  trials 220/450 (1544s)
+  trials 230/450 (1615s)
+  trials 240/450 (1699s)
+  trials 250/450 (1781s)
+  trials 260/450 (1845s)
+  trials 270/450 (1950s)
+  trials 280/450 (2014s)
+  trials 290/450 (2121s)
+  trials 300/450 (2161s)
+  trials 310/450 (2273s)
+  trials 320/450 (2327s)
+  trials 330/450 (2421s)
+  trials 340/450 (2481s)

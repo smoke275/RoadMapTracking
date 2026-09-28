@@ -1,0 +1,36 @@
+=== poly8 (22 workers) ===
+Corners: [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+KER coverage computed in 0.61s
+Total: 29 corners — [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+[INFO] ILP cover: 13/1716 candidates (15 after domination pre-processing).
+Set cover solved in 0.005s (13 guards selected)
+  0%|          | 0/7 [00:00<?, ?it/s]100%|██████████| 7/7 [00:00<00:00, 307.04it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 5532.6779 sq units uncovered (4.3617% of total area 126847.09).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 393 nodes, 379 edges
+  [poly8 | minmax-alpha | skeleton] 25/50 trials  (776s elapsed, ~776s remaining, 22 workers)
+  [poly8 | minmax-alpha | skeleton] 50/50 trials  (1192s elapsed, ~0s remaining, 22 workers)
+  [poly8 | geo-follow | skeleton] 25/50 trials  (103s elapsed, ~103s remaining, 22 workers)
+  [poly8 | geo-follow | skeleton] 50/50 trials  (153s elapsed, ~0s remaining, 22 workers)
+  [poly8 | tsp-patrol | skeleton] 25/50 trials  (735s elapsed, ~735s remaining, 22 workers)
+  [poly8 | tsp-patrol | skeleton] 50/50 trials  (1069s elapsed, ~0s remaining, 22 workers)
+  [poly8 | minmax-alpha | adversarial] 25/50 trials  (859s elapsed, ~859s remaining, 22 workers)
+  [poly8 | minmax-alpha | adversarial] 50/50 trials  (1235s elapsed, ~0s remaining, 22 workers)
+  [poly8 | geo-follow | adversarial] 25/50 trials  (111s elapsed, ~111s remaining, 22 workers)
+  [poly8 | geo-follow | adversarial] 50/50 trials  (166s elapsed, ~0s remaining, 22 workers)
+  [poly8 | tsp-patrol | adversarial] 25/50 trials  (778s elapsed, ~778s remaining, 22 workers)
+  [poly8 | tsp-patrol | adversarial] 50/50 trials  (1195s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly8        Min-Max α-Guard (Proposed)   Skeleton Evader         4.17±2.09  15.75±10.87 65.14±19.99%     0.0±0.1
+poly8        Geo-Follow                   Skeleton Evader         4.17±2.10  15.26±10.53 64.98±23.77%     0.0±0.0
+poly8        TSP-Patrol                   Skeleton Evader         8.91±3.58  37.77±29.10 25.01±19.53%     0.0±0.1
+poly8        Min-Max α-Guard (Proposed)   Adversarial Evader    59.30±56.92 219.09±121.42 93.66±12.66%     4.0±1.7
+poly8        Geo-Follow                   Adversarial Evader    42.57±26.80 197.27±92.01 94.39±11.96%    16.1±52.2
+poly8        TSP-Patrol                   Adversarial Evader   392.08±178.31 803.73±213.82 33.64±18.86%     2.1±1.2
+
+[SAVED] /app/benchmark_results/20260928_030500_table.txt
+[SAVED] /app/benchmark_results/20260928_030500_raw.csv

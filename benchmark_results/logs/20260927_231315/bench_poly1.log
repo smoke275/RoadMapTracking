@@ -1,0 +1,36 @@
+=== poly1 (22 workers) ===
+Corners: [1, 2, 4, 5, 8, 11, 14, 15, 16, 19, 22, 25, 26, 27, 30, 33, 34, 35, 38, 41, 43, 44]
+KER coverage computed in 0.36s
+Total: 22 corners — [1, 2, 4, 5, 8, 11, 14, 15, 16, 19, 22, 25, 26, 27, 30, 33, 34, 35, 38, 41, 43, 44]
+[INFO] ILP cover: 9/1534 candidates (14 after domination pre-processing).
+Set cover solved in 0.005s (9 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 366.96it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 414 nodes, 406 edges
+  [poly1 | minmax-alpha | skeleton] 25/50 trials  (468s elapsed, ~468s remaining, 22 workers)
+  [poly1 | minmax-alpha | skeleton] 50/50 trials  (718s elapsed, ~0s remaining, 22 workers)
+  [poly1 | geo-follow | skeleton] 25/50 trials  (64s elapsed, ~64s remaining, 22 workers)
+  [poly1 | geo-follow | skeleton] 50/50 trials  (102s elapsed, ~0s remaining, 22 workers)
+  [poly1 | tsp-patrol | skeleton] 25/50 trials  (43s elapsed, ~43s remaining, 22 workers)
+  [poly1 | tsp-patrol | skeleton] 50/50 trials  (69s elapsed, ~0s remaining, 22 workers)
+  [poly1 | minmax-alpha | adversarial] 25/50 trials  (477s elapsed, ~477s remaining, 22 workers)
+  [poly1 | minmax-alpha | adversarial] 50/50 trials  (734s elapsed, ~0s remaining, 22 workers)
+  [poly1 | geo-follow | adversarial] 25/50 trials  (67s elapsed, ~67s remaining, 22 workers)
+  [poly1 | geo-follow | adversarial] 50/50 trials  (104s elapsed, ~0s remaining, 22 workers)
+  [poly1 | tsp-patrol | adversarial] 25/50 trials  (46s elapsed, ~46s remaining, 22 workers)
+  [poly1 | tsp-patrol | adversarial] 50/50 trials  (77s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly1        Min-Max α-Guard (Proposed)   Skeleton Evader         2.59±1.71    5.64±4.49 84.91±20.21%     0.0±0.0
+poly1        Geo-Follow                   Skeleton Evader         3.23±1.58    7.15±4.28 85.08±17.30%     0.0±0.0
+poly1        TSP-Patrol                   Skeleton Evader         7.59±3.02  22.95±35.74 40.02±28.24%     0.0±0.0
+poly1        Min-Max α-Guard (Proposed)   Adversarial Evader   112.68±131.94 383.91±267.26 86.24±20.69%     2.8±1.4
+poly1        Geo-Follow                   Adversarial Evader   142.73±128.62 422.71±296.59 93.39±11.96%     1.8±1.1
+poly1        TSP-Patrol                   Adversarial Evader   806.04±383.45 1228.94±393.24 25.26±35.26%     1.2±0.4
+
+[SAVED] /app/benchmark_results/20260927_235233_table.txt
+[SAVED] /app/benchmark_results/20260927_235233_raw.csv

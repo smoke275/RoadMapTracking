@@ -1,0 +1,7 @@
+Polygon     n  |C|    |K|  |S|   |E|    Length   %Area
+------------------------------------------------------
+poly5      38   17   1135    8   416    8017.6  100.0%
+poly6      39   17    996    7   364    7867.6   97.2%
+poly7      30   12    526    7   284    7489.8   97.6%
+
+n, |C| after boundary cleaning; |K| KER candidates before domination pre-processing; |E| edges of the enriched patrol graph; Length = total patrol-path length; %Area = guard visibility coverage.
