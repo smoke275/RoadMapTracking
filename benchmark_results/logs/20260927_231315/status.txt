@@ -44,3 +44,5 @@ polygons: poly1 poly2 poly3 poly4 poly5 poly6 poly7 poly8 poly9   seeds=50 frame
 2026-09-28 03:24:41 START groups_poly9
 2026-09-28 03:30:14 DONE  groups_poly9
 2026-09-28 03:30:14 START multi_evader_poly9
+2026-09-28 04:35:19 DONE  multi_evader_poly9
+2026-09-28 04:35:19 ALL STAGES FINISHED
