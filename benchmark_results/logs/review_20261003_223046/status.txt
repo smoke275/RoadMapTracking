@@ -1,0 +1,12 @@
+seeds=50 frames=600 workers=22
+2026-10-03 22:30:46 START bench_poly9
+2026-10-03 23:00:36 DONE  bench_poly9
+2026-10-03 23:00:36 START bench_kernel_poly9
+2026-10-03 23:01:30 DONE  bench_kernel_poly9
+2026-10-03 23:01:30 START sweep_sp0.6
+2026-10-03 23:23:10 DONE  sweep_sp0.6
+2026-10-03 23:23:10 START sweep_sp0.8
+2026-10-03 23:44:35 DONE  sweep_sp0.8
+2026-10-03 23:44:35 START sweep_sp1.0
+2026-10-04 00:05:39 DONE  sweep_sp1.0
+2026-10-04 00:05:39 START sweep_sp1.2

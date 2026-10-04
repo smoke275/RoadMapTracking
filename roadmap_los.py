@@ -14,15 +14,22 @@ Pure computation, no Qt. Reuses what the pipeline already produces:
   - los_score.evader_path_to_corner   the evader's geodesic to a corner
   - ker_pipeline._build_vis_shape     visilibity visibility polygon -> shapely
 
-The intersection is exact and needs only the path's vertices. In a simple
-polygon, if a roadmap point q sees both endpoints of a straight path leg,
-the triangle they span lies inside the polygon (no holes), so q sees the
-whole leg. Visibility along a leg therefore never drops out mid-way, and the
-persistently visible roadmap is the intersection of the clipped roadmap at
-the start, at every bend (a reflex vertex) and at the corner. Geodesics only
-bend at reflex vertices, so every viewpoint is either an evader position or
-a corner: `VisCache` memoises the clipped roadmap per viewpoint, which makes
-sweeping many evader positions cheap.
+The intersection needs only the path's vertices plus one subtlety. In a
+simple polygon, if a roadmap point q sees both endpoints of a straight path
+leg, any occlusion of the leg's interior can only come from the obstacle
+wedges at the leg's own endpoints: a boundary intrusion into the triangle
+q-u-v would have to cross one of its sides (which lie in the polygon) or
+enter through a vertex. The wedge at a bend vertex occludes a contiguous
+stretch of the leg starting at that vertex, so q sees the whole leg iff it
+sees a point a hair along the leg from each endpoint. We therefore evaluate
+visibility at viewpoints nudged _NUDGE units along each incident leg of
+every path vertex (not at the vertex itself, and not along the interior
+bisector, both of which can be visible while the leg's first stretch is
+not). Geodesics bend only at reflex vertices, so the bend-side viewpoints
+form a small fixed set per polygon and `VisCache` memoises the clipped
+roadmap per viewpoint, which keeps sweeping many evader positions cheap;
+configurations whose blocked stretch is shorter than _NUDGE are missed,
+an error of the same order as the _VIS_TOL buffering.
 
 `trace_common_visible_roadmap` additionally samples the path every `step`
 units purely so a viewer can replay the walk; the samples do not affect the
@@ -178,32 +185,47 @@ class VisCache:
         return self._corner_by_xy.get((round(pos[0], 4), round(pos[1], 4)))
 
 
+def _leg_viewpoints(path: list, i: int, shapely_env) -> list:
+    """Viewpoints certifying sight of the legs incident to path[i]: the
+    vertex nudged _NUDGE units along each incident leg. The obstacle wedge at
+    a bend (or at the destination corner) occludes a contiguous stretch of a
+    leg starting at the vertex, from viewpoints that may still see the vertex
+    itself, so the vertex (or a bisector nudge) is not a valid certificate
+    for the leg."""
+    pos = path[i]
+    if i == 0 and shapely_env.contains(Point(pos)):
+        return [pos]                     # the start is an interior point: no wedge
+    views = []
+    for j in (i - 1, i + 1):
+        if j < 0 or j >= len(path):
+            continue
+        dx, dy = path[j][0] - pos[0], path[j][1] - pos[1]
+        d = math.hypot(dx, dy)
+        if d < 1e-9:
+            continue
+        cand = (pos[0] + dx / d * _NUDGE, pos[1] + dy / d * _NUDGE)
+        if shapely_env.contains(Point(cand)):
+            views.append(cand)
+    return views or [pos]
+
+
 def persistent_visible_roadmap(ex: float, ey: float, corner_idx: int, data,
                                cache: VisCache, path: list = None):
     """Exact V(e, c): roadmap visible for the whole escape from (ex, ey) to
-    corner `corner_idx` — the intersection of the clipped roadmap at the
-    path's vertices (start, bends, corner). Returns (MultiLineString, path)."""
+    corner `corner_idx` — the intersection of the clipped roadmap at
+    viewpoints nudged along each leg incident to each path vertex (see
+    module docstring). Returns (MultiLineString, path)."""
     if path is None:
         path = evader_path_to_corner(ex, ey, corner_idx, data)
     common = cache.roadmap
-    n_fail = 0
-    for i, pos in enumerate(path):
-        cidx = cache.corner_index_at(pos) if i > 0 else None
-        if i == len(path) - 1:
-            cidx = corner_idx
-        if cidx is not None:
-            vis = cache.visible_roadmap_at_corner(cidx)
-        else:
-            prev_pos = path[i - 1] if i > 0 else None
-            next_pos = path[i + 1] if i + 1 < len(path) else None
-            view = _interior_viewpoint(pos, prev_pos, next_pos, data.shapely_env)
+    for i in range(len(path)):
+        for view in _leg_viewpoints(path, i, data.shapely_env):
             vis = cache.visible_roadmap(view)
-        if vis is None:
-            n_fail += 1
-            continue
-        common = lines_only(common.intersection(vis.buffer(_VIS_TOL)))
-        if common.is_empty:
-            break
+            if vis is None:
+                continue
+            common = lines_only(common.intersection(vis.buffer(_VIS_TOL)))
+            if common.is_empty:
+                return common, path
     return common, path
 
 

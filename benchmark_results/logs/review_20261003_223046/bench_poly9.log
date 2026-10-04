@@ -1,0 +1,48 @@
+=== poly9 (22 workers) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 505.46it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (223s elapsed, ~223s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (337s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | skeleton] 25/50 trials  (236s elapsed, ~236s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | skeleton] 50/50 trials  (342s elapsed, ~0s remaining, 22 workers)
+  [poly9 | geo-follow | skeleton] 25/50 trials  (48s elapsed, ~48s remaining, 22 workers)
+  [poly9 | geo-follow | skeleton] 50/50 trials  (73s elapsed, ~0s remaining, 22 workers)
+  [poly9 | greedy-los | skeleton] 25/50 trials  (32s elapsed, ~32s remaining, 22 workers)
+  [poly9 | greedy-los | skeleton] 50/50 trials  (50s elapsed, ~0s remaining, 22 workers)
+  [poly9 | tsp-patrol | skeleton] 25/50 trials  (31s elapsed, ~31s remaining, 22 workers)
+  [poly9 | tsp-patrol | skeleton] 50/50 trials  (48s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (206s elapsed, ~206s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (333s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | adversarial] 25/50 trials  (206s elapsed, ~206s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | adversarial] 50/50 trials  (349s elapsed, ~0s remaining, 22 workers)
+  [poly9 | geo-follow | adversarial] 25/50 trials  (47s elapsed, ~47s remaining, 22 workers)
+  [poly9 | geo-follow | adversarial] 50/50 trials  (109s elapsed, ~0s remaining, 22 workers)
+  [poly9 | greedy-los | adversarial] 25/50 trials  (33s elapsed, ~33s remaining, 22 workers)
+  [poly9 | greedy-los | adversarial] 50/50 trials  (90s elapsed, ~0s remaining, 22 workers)
+  [poly9 | tsp-patrol | adversarial] 25/50 trials  (32s elapsed, ~32s remaining, 22 workers)
+  [poly9 | tsp-patrol | adversarial] 50/50 trials  (57s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.51±0.66    3.55±2.67 86.85±16.45%     0.0±0.0     0.8±1.0
+poly9        Min-Max +Vis Slack (Proposed) Skeleton Evader         1.52±0.68    3.62±3.27 87.54±14.69%     0.0±0.0     0.7±0.9
+poly9        Geo-Follow                   Skeleton Evader         1.93±0.92    3.99±3.89 88.68±21.21%     0.0±0.0     0.4±0.6
+poly9        Greedy-LOS                   Skeleton Evader         1.95±0.94    4.15±4.09 94.37±10.00%     0.0±0.0     0.3±0.6
+poly9        TSP-Patrol                   Skeleton Evader         5.14±2.28  17.43±26.70 25.21±30.84%     0.0±0.0     1.4±0.7
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    66.50±39.63 318.14±132.64 82.07±23.41%     2.5±0.9     0.6±0.6
+poly9        Min-Max +Vis Slack (Proposed) Adversarial Evader    78.29±75.63 387.62±465.15 80.83±25.69%     2.4±1.0     0.6±0.6
+poly9        Geo-Follow                   Adversarial Evader   2559.10±16913.31 3803.72±24383.98 77.08±34.20%     1.4±0.7     0.5±0.6
+poly9        Greedy-LOS                   Adversarial Evader   2546.14±16915.18 3799.80±24384.57 87.62±22.78%     1.4±0.7     0.4±0.6
+poly9        TSP-Patrol                   Adversarial Evader   590.35±362.33 1086.32±633.97 23.49±37.00%     1.3±0.7     0.8±0.4
+
+[SAVED] /app/benchmark_results/20261003_230036_table.txt
+[SAVED] /app/benchmark_results/20261003_230036_raw.csv

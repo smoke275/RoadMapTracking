@@ -41,7 +41,7 @@ from shapely.geometry import LineString
 import ker_pipeline
 from benchmark.evaders import SkeletonEvader
 from benchmark.harness import load_poly
-from benchmark.metrics import BREACH_RADIUS
+from benchmark.metrics import BREACH_RADIUS, ESCAPE_TAU
 from config import GROUP_AFFINITY_GRID, GROUP_TRACE_STEP
 from corner_groups import (_alphas_at, compute_frame_multi, compute_optimal_guard,
                            compute_path_lengths_multi, evader_grid, make_grouping)
@@ -116,6 +116,8 @@ def run_trial(data, groups: list, m: int, seed: int, frames: int,
 
     alphas, in_view, breaches = [], [], 0
     in_breach = set()
+    no_los = [0] * m          # consecutive unseen frames per evader
+    escapes = 0               # unseen runs longer than ESCAPE_TAU frames
     for _ in range(frames):
         positions = [tuple(c.pos) for c in ctrls]
         mf = compute_frame_multi(evs, None, positions, data, groups)
@@ -127,6 +129,11 @@ def run_trial(data, groups: list, m: int, seed: int, frames: int,
         for j, e in enumerate(evs):
             if any(data.shapely_env.covers(LineString([p, e])) for p in positions):
                 seen += 1
+                no_los[j] = 0
+            else:
+                no_los[j] += 1
+                if no_los[j] == ESCAPE_TAU + 1:
+                    escapes += 1
             own = mf.per_evader_pl[j]
             for c in data.corners:
                 if own[c] < BREACH_RADIUS:
@@ -143,7 +150,8 @@ def run_trial(data, groups: list, m: int, seed: int, frames: int,
     return {'mean_alpha': statistics.mean(fin) if fin else float('nan'),
             'peak_alpha': max(fin) if fin else float('nan'),
             'in_view_pct': 100.0 * statistics.mean(in_view),
-            'n_breach': breaches}
+            'n_breach': breaches,
+            'n_escape': escapes}
 
 
 def _job(args):
@@ -215,12 +223,13 @@ def main():
     for r in results['oracle']:
         lines.append(f'{r["polygon"]:<8} {r["k"]:>2} {r["m"]:>2} {r["max"]:>9.3f} {r["p95"]:>7.3f} {r["mean"]:>7.3f}')
     if results['trials']:
-        lines += ['', f'{"Polygon":<8} {"k":>2} {"m":>2} {"mean α":>13} {"α_max":>13} {"%in view":>14} {"N_breach":>11}',
-                  '-' * 70]
+        lines += ['', f'{"Polygon":<8} {"k":>2} {"m":>2} {"mean α":>13} {"α_max":>13} {"%in view":>14} {"N_breach":>11} {"N_escape":>11}',
+                  '-' * 82]
         for r in results['trials']:
             f = lambda key: f'{r[key][0]:.2f}±{r[key][1]:.2f}'
+            esc = f('n_escape') if 'n_escape' in r else '-'
             lines.append(f'{r["polygon"]:<8} {r["k"]:>2} {r["m"]:>2} {f("mean_alpha"):>13} '
-                         f'{f("peak_alpha"):>13} {f("in_view_pct"):>13}% {f("n_breach"):>11}')
+                         f'{f("peak_alpha"):>13} {f("in_view_pct"):>13}% {f("n_breach"):>11} {esc:>11}')
     lines += ['', f'oracle: worst / p95 / mean team alpha over {args.configs} sampled m-evader '
                   f'configurations (corner standoff as printed), L_c = min over evaders; '
                   f'trials: {args.seeds} seeds x '

@@ -6,7 +6,9 @@ import time
 
 STRATEGY_LABELS = {
     'minmax-alpha': 'Min-Max α-Guard (Proposed)',
+    'minmax-alpha-vis': 'Min-Max +Vis Slack (Proposed)',
     'geo-follow': 'Geo-Follow',
+    'greedy-los': 'Greedy-LOS',
     'tsp-patrol': 'TSP-Patrol',
     'kernel-control': 'Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25)',
 }
@@ -18,7 +20,8 @@ EVADER_LABELS = {
 
 def format_table(results: list) -> str:
     header = (f'{"Environment":<12} {"Strategy":<28} {"Evader":<20} '
-              f'{"ᾱ":>12} {"α_max":>12} {"%LOS":>12} {"N_breach":>10}')
+              f'{"ᾱ":>12} {"α_max":>12} {"%LOS":>12} {"N_breach":>10} '
+              f'{"N_escape":>10}')
     lines = [header, '-' * len(header)]
     for r in results:
         agg = r.aggregate()
@@ -29,13 +32,18 @@ def format_table(results: list) -> str:
             return f'{mean:.2f}±{std:.2f}{suffix}'
 
         mean_b, std_b = agg['n_breach']
+        if 'n_escape' in agg:
+            mean_e, std_e = agg['n_escape']
+            esc = f'{mean_e:>7.1f}±{std_e:.1f}'
+        else:
+            esc = f'{"-":>10}'
         lines.append(
             f'{r.environment:<12} '
             f'{STRATEGY_LABELS.get(r.strategy, r.strategy):<28} '
             f'{EVADER_LABELS.get(r.evader, r.evader):<20} '
             f'{fmt("mean_alpha"):>12} {fmt("peak_alpha"):>12} '
             f'{fmt("los_pct", pct=True):>12} '
-            f'{mean_b:>7.1f}±{std_b:.1f}')
+            f'{mean_b:>7.1f}±{std_b:.1f} {esc}')
     return '\n'.join(lines)
 
 

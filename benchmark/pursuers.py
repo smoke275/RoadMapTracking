@@ -6,11 +6,24 @@ StableNodeController then drives the pursuer toward it along the roadmap.
 import itertools
 import math
 
+from shapely.geometry import Point
+from shapely.prepared import prep
+
 from geometry import interpolate_point
 from graph import dijkstra
-from ker_pipeline import compute_optimal_guard, compute_path_lengths, _opt_offset
+from ker_pipeline import (_build_vis_shape, compute_optimal_guard,
+                          compute_path_lengths, _opt_offset)
 from pursuer_motion import StableNodeController
 from benchmark.kernel_pursuer import KernelWeightedPursuer
+
+
+def _evader_vis_prepared(evader_pos, data):
+    """Prepared visibility polygon of the evader (buffered a hair), or None.
+    A roadmap point covered by it has line of sight to the evader."""
+    shape = _build_vis_shape(evader_pos[0], evader_pos[1], data.env)
+    if shape is None:
+        return None
+    return prep(shape.buffer(0.1))
 
 
 class MinMaxAlphaPursuer:
@@ -41,6 +54,47 @@ class MinMaxAlphaPursuer:
     @property
     def pos(self):
         return self.ctrl.pos
+
+
+class MinMaxAlphaVisPursuer(MinMaxAlphaPursuer):
+    """Epsilon-slack vision layer (proposed, timing first + sight with the
+    slack): if g* itself sees the evader, chase g*; otherwise chase the
+    roadmap vertex with the lowest worst-corner alpha among those whose
+    alpha is within (1 + EPS) of the optimum AND that currently see the
+    evader; with no such vertex, fall back to g*. The single-pursuer
+    analogue of the team ILP's relaxed speed bound."""
+
+    name = 'minmax-alpha-vis'
+    EPS = 0.10
+
+    def target(self, evader_pos, path_lengths, cur_pos=None):
+        v1, v2, opt_alpha = compute_optimal_guard(path_lengths, self.data)
+        g = interpolate_point(self.data.vertices[v1], self.data.vertices[v2],
+                              _opt_offset(path_lengths, v1, v2, self.data))
+        gpos = (g.x, g.y)
+        vp = _evader_vis_prepared(evader_pos, self.data)
+        if vp is None or vp.covers(Point(gpos)):
+            return gpos
+        bound = opt_alpha * (1.0 + self.EPS)
+        best = None
+        for i, vtx in enumerate(self.data.vertices):
+            vec = self.data.vectors_org[i]
+            a = 0.0
+            for c, length in path_lengths.items():
+                r = vec[c] / length
+                if r > a:
+                    a = r
+                    if a > bound:
+                        break
+            if a <= bound and vp.covers(Point((vtx.x, vtx.y))):
+                if best is None or a < best[0]:
+                    best = (a, (vtx.x, vtx.y))
+        return best[1] if best is not None else gpos
+
+    def step(self, evader_pos, path_lengths):
+        return self.ctrl.step(self.data.graph,
+                              self.target(evader_pos, path_lengths),
+                              self.speed)
 
 
 class GeoFollowPursuer:
@@ -85,6 +139,45 @@ class GeoFollowPursuer:
         return self.ctrl.pos
 
 
+class GreedyLOSPursuer:
+    """Sight-only baseline: drive to the roadmap vertex that currently sees
+    the evader and is closest to it (for a visible vertex the geodesic
+    distance equals the Euclidean distance); with no visible vertex, fall
+    back to the geodesically closest vertex to reacquire. Ignores the
+    timing ratio entirely — the ablation counterpart of Min-Max."""
+
+    name = 'greedy-los'
+    K = 15                     # Euclidean prefilter for the geodesic fallback
+
+    def __init__(self, data, evader_start, speed):
+        self.data = data
+        self.speed = speed
+        self._verts = [(v.x, v.y) for v in data.vertices]
+        self._geo_fallback = GeoFollowPursuer._target
+        self.ctrl = StableNodeController(self._target(evader_start))
+
+    def _target(self, evader_pos):
+        ex, ey = evader_pos
+        vp = _evader_vis_prepared(evader_pos, self.data)
+        if vp is not None:
+            visible = [v for v in self._verts if vp.covers(Point(v))]
+            if visible:
+                return min(visible,
+                           key=lambda v: math.hypot(v[0] - ex, v[1] - ey))
+        return self._geo_fallback(self, evader_pos)
+
+    def target(self, evader_pos, path_lengths=None, cur_pos=None):
+        return self._target(evader_pos)
+
+    def step(self, evader_pos, path_lengths):
+        return self.ctrl.step(self.data.graph, self._target(evader_pos),
+                              self.speed)
+
+    @property
+    def pos(self):
+        return self.ctrl.pos
+
+
 class TSPPatrolPursuer:
     """Uninformed baseline: cyclically traverse a minimum-length TSP tour
     over the selected guard set, ignoring the evader entirely. The tour is
@@ -116,13 +209,35 @@ class TSPPatrolPursuer:
                 dist[i][j] = dist[j][i] = d
         if n == 2:
             return list(guards)
-        best_perm, best_cost = None, float('inf')
-        for perm in itertools.permutations(range(1, n)):
-            order = (0,) + perm
-            cost = sum(dist[order[k]][order[(k + 1) % n]] for k in range(n))
-            if cost < best_cost:
-                best_cost, best_perm = cost, order
-        return [guards[i] for i in best_perm]
+        # Held-Karp DP over subsets: exact in O(2^n n^2), fine for n <= ~16
+        # (the old brute force was O(n!), hopeless at poly8's 13 guards).
+        FULL = 1 << (n - 1)              # subsets of {1..n-1}, city 0 fixed
+        dp = [[math.inf] * (n - 1) for _ in range(FULL)]
+        par = [[-1] * (n - 1) for _ in range(FULL)]
+        for j in range(n - 1):
+            dp[1 << j][j] = dist[0][j + 1]
+        for mask in range(FULL):
+            for j in range(n - 1):
+                cur = dp[mask][j]
+                if not math.isfinite(cur) or not (mask >> j) & 1:
+                    continue
+                for nxt in range(n - 1):
+                    if (mask >> nxt) & 1:
+                        continue
+                    nm = mask | (1 << nxt)
+                    cand = cur + dist[j + 1][nxt + 1]
+                    if cand < dp[nm][nxt]:
+                        dp[nm][nxt] = cand
+                        par[nm][nxt] = j
+        full = FULL - 1
+        j = min(range(n - 1), key=lambda t: dp[full][t] + dist[t + 1][0])
+        order, mask = [], full
+        while j != -1:
+            order.append(j + 1)
+            j, mask = par[mask][j], mask ^ (1 << j)
+        order.append(0)
+        order.reverse()
+        return [guards[i] for i in order]
 
     def target(self, evader_pos=None, path_lengths=None, cur_pos=None):
         """Current tour node, advancing the leg on arrival. cur_pos defaults
@@ -145,7 +260,9 @@ class TSPPatrolPursuer:
 
 PURSUER_CLASSES = {
     'minmax-alpha': MinMaxAlphaPursuer,
+    'minmax-alpha-vis': MinMaxAlphaVisPursuer,
     'kernel-control': KernelWeightedPursuer,
     'geo-follow': GeoFollowPursuer,
+    'greedy-los': GreedyLOSPursuer,
     'tsp-patrol': TSPPatrolPursuer,
 }

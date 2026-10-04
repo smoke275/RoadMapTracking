@@ -1,0 +1,200 @@
+=== sp=0.6 ===
+=== poly9 (22 workers) ===
+  0%|          | 0/5 [00:00<?, ?it/s]Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.29s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.014s (7 guards selected)
+100%|██████████| 5/5 [00:00<00:00, 508.29it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (227s elapsed, ~227s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (334s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (201s elapsed, ~201s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (316s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.63±0.67    3.59±2.88 82.06±18.62%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    89.34±61.32 332.00±153.90 83.76±22.55%     1.9±0.9
+
+[SAVED] /app/benchmark_results/20261003_162058_table.txt
+[SAVED] /app/benchmark_results/20261003_162058_raw.csv
+=== sp=0.8 ===
+=== poly9 (22 workers) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 506.85it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (210s elapsed, ~210s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (328s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (195s elapsed, ~195s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (316s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.43±0.53    3.08±1.60 87.52±16.81%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    66.50±39.63 318.14±132.64 82.07±23.41%     2.5±0.9
+
+[SAVED] /app/benchmark_results/20261003_163144_table.txt
+[SAVED] /app/benchmark_results/20261003_163144_raw.csv
+=== sp=1.0 ===
+=== poly9 (22 workers) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 515.65it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (202s elapsed, ~202s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (305s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (199s elapsed, ~199s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (311s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.44±0.57    3.07±1.77 84.98±17.70%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    41.59±38.07 252.67±141.54 81.55±26.26%     2.6±1.1
+
+[SAVED] /app/benchmark_results/20261003_164201_table.txt
+[SAVED] /app/benchmark_results/20261003_164201_raw.csv
+=== sp=1.2 ===
+=== poly9 (22 workers) ===
+  0%|          | 0/5 [00:00<?, ?it/s]Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.29s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+100%|██████████| 5/5 [00:00<00:00, 507.72it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (202s elapsed, ~202s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (305s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (204s elapsed, ~204s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (313s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.31±0.51    3.22±3.44 90.16±15.07%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    22.15±22.21 177.61±127.83 82.91±26.21%     2.3±1.1
+
+[SAVED] /app/benchmark_results/20261003_165221_table.txt
+[SAVED] /app/benchmark_results/20261003_165221_raw.csv
+=== sp=1.4 ===
+=== poly9 (22 workers) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 515.11it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (205s elapsed, ~205s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (332s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (200s elapsed, ~200s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (321s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.21±0.37    2.51±1.49 91.21±15.34%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    13.02±13.77 135.92±110.70 86.61±24.75%     4.9±16.6
+
+[SAVED] /app/benchmark_results/20261003_170316_table.txt
+[SAVED] /app/benchmark_results/20261003_170316_raw.csv
+=== sp=1.6 ===
+=== poly9 (22 workers) ===
+  0%|          | 0/5 [00:00<?, ?it/s]Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+100%|██████████| 5/5 [00:00<00:00, 480.12it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (198s elapsed, ~198s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (299s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (196s elapsed, ~196s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (304s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.18±0.31    2.44±1.24 92.34±14.59%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    10.85±13.85 113.83±110.68 87.41±26.48%     2.1±1.3
+
+[SAVED] /app/benchmark_results/20261003_171321_table.txt
+[SAVED] /app/benchmark_results/20261003_171321_raw.csv
+=== sp=1.8 ===
+=== poly9 (22 workers) ===
+  0%|          | 0/5 [00:00<?, ?it/s]Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+100%|██████████| 5/5 [00:00<00:00, 513.97it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (197s elapsed, ~197s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (299s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (207s elapsed, ~207s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (337s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.14±0.27    2.13±0.96 92.46±14.67%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader      8.26±8.88 120.34±120.95 92.01±20.17%     2.3±2.3
+
+[SAVED] /app/benchmark_results/20261003_172358_table.txt
+[SAVED] /app/benchmark_results/20261003_172358_raw.csv
+=== sp=2.0 ===
+=== poly9 (22 workers) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 512.16it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (201s elapsed, ~201s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (314s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (206s elapsed, ~206s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (315s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach
+----------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.14±0.26    2.19±0.97 91.53±15.60%     0.0±0.0
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader      5.63±7.30 92.78±105.62 93.10±17.51%     7.3±37.1
+
+[SAVED] /app/benchmark_results/20261003_173429_table.txt
+[SAVED] /app/benchmark_results/20261003_173429_raw.csv

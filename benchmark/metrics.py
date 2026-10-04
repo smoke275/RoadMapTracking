@@ -9,6 +9,7 @@ from config import EPSILON
 from geometry import poly_to_points
 
 BREACH_RADIUS = 1.5   # d_geo(e, c) below which a corner counts as reached
+ESCAPE_TAU = 30       # frames of lost sight (1 s at 30 fps) that count as an escape
 
 
 def _point_segment_dist(px, py, ax, ay, bx, by):
@@ -72,6 +73,8 @@ class TrialRecorder:
     los_frames: int = 0
     frames: int = 0
     breach_count: int = 0
+    escape_count: int = 0          # no-LOS runs longer than ESCAPE_TAU frames
+    _no_los_run: int = 0
     _in_breach: set = field(default_factory=set)
 
     def record(self, pursuer_pos, evader_pos, path_lengths, data):
@@ -81,6 +84,11 @@ class TrialRecorder:
             self.max_alphas.append(max(finite))
         if has_los(pursuer_pos, evader_pos, data):
             self.los_frames += 1
+            self._no_los_run = 0
+        else:
+            self._no_los_run += 1
+            if self._no_los_run == ESCAPE_TAU + 1:   # count the run once
+                self.escape_count += 1
         # Breach: evader arrives near corner c while alpha_c > 1 — count
         # entry events, not frames, so a lingering evader counts once.
         now_breach = {c for c in data.corners
@@ -98,4 +106,5 @@ class TrialRecorder:
             'peak_alpha': max(self.max_alphas) if self.max_alphas else float('nan'),
             'los_pct': 100.0 * self.los_frames / n,
             'n_breach': self.breach_count,
+            'n_escape': self.escape_count,
         }
