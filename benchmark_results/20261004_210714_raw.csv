@@ -1,0 +1,5 @@
+environment,strategy,evader,seed,mean_alpha,peak_alpha,los_pct,n_breach,n_escape
+poly9,minmax-alpha,escaping,0,0.990367258497027,1.7604249644329522,33.0,0,1
+poly9,minmax-alpha,escaping,1,30773.27881149994,6154341.673312808,100.0,2,0
+poly9,greedy-los,escaping,0,1.1771652890076263,2.090946910961857,86.5,0,0
+poly9,greedy-los,escaping,1,8.554464063417232,365.1230903528221,100.0,1,0

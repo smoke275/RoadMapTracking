@@ -15,6 +15,7 @@ STRATEGY_LABELS = {
 EVADER_LABELS = {
     'skeleton': 'Skeleton Evader',
     'adversarial': 'Adversarial Evader',
+    'escaping': 'Escaping Evader',
 }
 
 

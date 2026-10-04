@@ -33,7 +33,7 @@ def main():
                         choices=sorted(PURSUER_CLASSES),
                         help='Pursuer strategies to benchmark')
     parser.add_argument('--evaders', nargs='+', default=['skeleton'],
-                        choices=['skeleton', 'adversarial'],
+                        choices=['skeleton', 'adversarial', 'escaping'],
                         help='Evader behavior models')
     parser.add_argument('--seeds', type=int, default=5,
                         help='Independent trials per configuration')

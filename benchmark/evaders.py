@@ -37,9 +37,10 @@ class SkeletonEvader:
         self._seg_pos = 0.0
         self._dest_history = deque(maxlen=avoid_recent) if avoid_recent > 0 else None
 
-    def step(self, dt: float, pursuer_alphas: dict = None):
+    def step(self, dt: float, pursuer_alphas: dict = None,
+             pursuer_pos=None):
         """Advance up to speed*dt along the skeleton. Returns new (x, y).
-        pursuer_alphas is ignored (this evader is pursuer-oblivious)."""
+        pursuer_alphas/pursuer_pos are ignored (pursuer-oblivious)."""
         budget = self.speed * dt
         while budget > 0:
             if not self._path or self._seg_idx >= len(self._path) - 1:
@@ -80,6 +81,128 @@ class SkeletonEvader:
         return self.pos[0], self.pos[1]
 
 
+class EscapingEvader:
+    """The threat of the necessity lemma, made executable: whenever the
+    evader wins a corner race (alpha_c > s_p/s_e for some corner), it
+    COMMITS to that corner, runs its geodesic to it, and on arrival steps
+    into the shadow of the corner with respect to the pursuer's current
+    position (the extension of the pursuer->corner ray, the escape
+    direction Lemma 1 guarantees exists when the pursuer is outside the
+    association region). It holds there briefly, then re-targets. When no
+    corner race is won, it pressures the currently worst-covered corner
+    like AdversarialEvader, at a standoff.
+
+    `ratio` is s_p/s_e: the evader knows the speeds, the strongest fair
+    adversary consistent with the paper's information model.
+    """
+
+    HOLD_FRAMES = 45          # dwell in the shadow before re-targeting
+    SHADOW_DEPTH = 3.0        # how far past the corner to step
+    ARRIVE = 0.8
+
+    def __init__(self, data, start_pos, speed, ratio=0.8, standoff=0.5):
+        self.data = data
+        self.pos = list(start_pos)
+        self.speed = speed
+        self.ratio = ratio
+        self.standoff = standoff
+        self._committed = None         # corner index, or None
+        self._shadow_target = None
+        self._hold = 0
+        self._recent = deque(maxlen=2)
+
+    def _shadow_point(self, c_xy, pursuer_pos):
+        """A point past the corner along the extension of the pursuer->
+        corner ray, clipped inside the polygon."""
+        dx, dy = c_xy[0] - pursuer_pos[0], c_xy[1] - pursuer_pos[1]
+        n = math.hypot(dx, dy)
+        if n < 1e-9:
+            return c_xy
+        dx, dy = dx / n, dy / n
+        from shapely.geometry import LineString, Point as ShPoint
+        for frac in (1.0, 0.75, 0.5, 0.3, 0.15):
+            L = self.SHADOW_DEPTH * frac
+            p = (c_xy[0] + dx * L, c_xy[1] + dy * L)
+            try:
+                if (self.data.shapely_env.covers(ShPoint(p)) and
+                        self.data.shapely_env.covers(
+                            LineString([c_xy, p]))):
+                    return p
+            except Exception:
+                continue
+        return c_xy
+
+    def _walk(self, path, budget, stop_short=0.0, goal=None):
+        px, py = self.pos
+        for nx, ny in path[1:]:
+            if budget <= 0:
+                break
+            if goal is not None and stop_short > 0:
+                d_goal = math.hypot(goal[0] - px, goal[1] - py)
+                if d_goal <= stop_short:
+                    break
+            seg = math.hypot(nx - px, ny - py)
+            if seg < 1e-9:
+                continue
+            step = min(budget, seg)
+            if goal is not None and stop_short > 0:
+                d_goal = math.hypot(goal[0] - px, goal[1] - py)
+                step = min(step, max(0.0, d_goal - stop_short))
+            px += (nx - px) / seg * step
+            py += (ny - py) / seg * step
+            budget -= step
+            if step < seg:
+                break
+        self.pos = [px, py]
+
+    def step(self, dt, pursuer_alphas: dict = None, pursuer_pos=None):
+        if not pursuer_alphas:
+            return self.pos[0], self.pos[1]
+        finite = {c: a for c, a in pursuer_alphas.items()
+                  if math.isfinite(a)}
+        if not finite:
+            return self.pos[0], self.pos[1]
+        budget = self.speed * dt
+
+        if self._committed is None:
+            cands = {c: a for c, a in finite.items()
+                     if c not in self._recent}
+            c_star = max(cands or finite, key=(cands or finite).get)
+            if finite[c_star] > self.ratio:
+                self._committed = c_star
+                self._shadow_target = None
+                self._hold = 0
+            else:
+                # no race won: pressure the worst corner at a standoff
+                target = (self.data.poly[c_star].x(),
+                          self.data.poly[c_star].y())
+                self._walk(self._geo_path(target), budget,
+                           stop_short=self.standoff, goal=target)
+                return self.pos[0], self.pos[1]
+
+        c = self._committed
+        c_xy = (self.data.poly[c].x(), self.data.poly[c].y())
+        d_c = math.hypot(c_xy[0] - self.pos[0], c_xy[1] - self.pos[1])
+        if self._shadow_target is None:
+            if d_c > self.ARRIVE:
+                self._walk(self._geo_path(c_xy), budget)
+                return self.pos[0], self.pos[1]
+            self._shadow_target = self._shadow_point(
+                c_xy, pursuer_pos if pursuer_pos is not None else self.pos)
+        t = self._shadow_target
+        d_t = math.hypot(t[0] - self.pos[0], t[1] - self.pos[1])
+        if d_t > 0.2:
+            self._walk([tuple(self.pos), t], budget)
+            return self.pos[0], self.pos[1]
+        self._hold += 1
+        if self._hold >= self.HOLD_FRAMES:
+            self._recent.append(c)
+            self._committed = None
+            self._shadow_target = None
+            self._hold = 0
+        return self.pos[0], self.pos[1]
+
+
 class AdversarialEvader:
     """Targets the reflex corner with the poorest pursuer timing margin
     (c* = argmax_c alpha_c(p, e)) and moves geodesically toward it,
@@ -105,7 +228,7 @@ class AdversarialEvader:
             sp = [vg.Point(p.x(), p.y()) for p in raw.path()]
         return [(p.x, p.y) for p in sp]
 
-    def step(self, dt, pursuer_alphas: dict = None):
+    def step(self, dt, pursuer_alphas: dict = None, pursuer_pos=None):
         """Advance toward the currently worst-covered corner.
         pursuer_alphas — per-corner alpha at the pursuer's current position."""
         if not pursuer_alphas:
@@ -135,3 +258,7 @@ class AdversarialEvader:
                 break
         self.pos = [px, py]
         return px, py
+
+
+# EscapingEvader shares AdversarialEvader's geodesic-path helper.
+EscapingEvader._geo_path = AdversarialEvader._geo_path

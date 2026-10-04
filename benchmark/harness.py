@@ -14,7 +14,8 @@ import ker_pipeline
 from geometry import get_random_point_in_polygon
 from ker_pipeline import compute_path_lengths
 
-from benchmark.evaders import AdversarialEvader, SkeletonEvader
+from benchmark.evaders import (AdversarialEvader, EscapingEvader,
+                               SkeletonEvader)
 from benchmark.metrics import TrialRecorder, alphas_at
 from benchmark.pursuers import PURSUER_CLASSES
 
@@ -64,12 +65,14 @@ class TrialResult:
         return out
 
 
-def _make_evader(model: str, data, start, speed):
+def _make_evader(model: str, data, start, speed, ratio=0.8):
     if model == 'skeleton':
         return SkeletonEvader(data.skel_nodes, data.skel_adj,
                               data.shapely_env, start, speed)
     if model == 'adversarial':
         return AdversarialEvader(data, start, speed)
+    if model == 'escaping':
+        return EscapingEvader(data, start, speed, ratio=ratio)
     raise ValueError(f'unknown evader model: {model}')
 
 
@@ -80,7 +83,8 @@ def run_trial(data, seed: int, strategy: str = 'minmax-alpha',
     random.seed(seed)
 
     ev_start = get_random_point_in_polygon(data.shapely_env)
-    evader = _make_evader(evader_model, data, (ev_start.x, ev_start.y), s_e)
+    evader = _make_evader(evader_model, data, (ev_start.x, ev_start.y),
+                          s_e, ratio=s_p / s_e)
     # Pursuer spawns at its own strategy's initial target (patrol assumed
     # converged before the trial), avoiding spawn-location bias in alpha_max.
     pursuer = PURSUER_CLASSES[strategy](data, (ev_start.x, ev_start.y), s_p)
@@ -96,7 +100,8 @@ def run_trial(data, seed: int, strategy: str = 'minmax-alpha',
         recorder.record(pursuer.pos, (ex, ey), path_lengths, data)
 
         p_alphas = alphas_at(pursuer.pos, path_lengths, data)
-        evader.step(dt=1.0, pursuer_alphas=p_alphas)
+        evader.step(dt=1.0, pursuer_alphas=p_alphas,
+                    pursuer_pos=tuple(pursuer.pos))
 
     return recorder.metrics()
 
