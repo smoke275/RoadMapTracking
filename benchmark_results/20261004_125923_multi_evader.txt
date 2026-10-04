@@ -1,0 +1,13 @@
+Polygon   k  m  s*_(k,m)     p95    mean
+------------------------------------------
+poly9     1  1     1.468   1.247   0.873
+poly9     2  1     1.145   1.048   0.735
+poly9     3  1     0.911   0.839   0.633
+
+Polygon   k  m        mean α         α_max       %in view    N_breach    N_escape
+----------------------------------------------------------------------------------
+poly9     1  1     1.21±0.36     2.68±2.00   89.16±15.03%   0.00±0.00   0.74±1.03
+poly9     2  1     1.11±0.32     2.22±1.12   91.58±13.36%   0.00±0.00   0.66±0.98
+poly9     3  1     0.77±0.17     1.31±0.62   94.47±11.14%   0.00±0.00   0.38±0.75
+
+oracle: worst / p95 / mean team alpha over 50 sampled m-evader configurations (corner standoff as printed), L_c = min over evaders; trials: 50 seeds x 600 frames, s_p=1.6, s_e=1.0, skeleton evaders.

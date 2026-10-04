@@ -1,0 +1,48 @@
+=== poly8 (22 workers) ===
+Corners: [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+KER coverage computed in 0.61s
+Total: 29 corners — [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+[INFO] ILP cover: 13/1716 candidates (15 after domination pre-processing).
+Set cover solved in 0.005s (13 guards selected)
+  0%|          | 0/7 [00:00<?, ?it/s]100%|██████████| 7/7 [00:00<00:00, 301.77it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 5532.6779 sq units uncovered (4.3617% of total area 126847.09).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 393 nodes, 379 edges
+  [poly8 | minmax-alpha | skeleton] 25/50 trials  (773s elapsed, ~773s remaining, 22 workers)
+  [poly8 | minmax-alpha | skeleton] 50/50 trials  (1156s elapsed, ~0s remaining, 22 workers)
+  [poly8 | minmax-alpha-vis | skeleton] 25/50 trials  (770s elapsed, ~770s remaining, 22 workers)
+  [poly8 | minmax-alpha-vis | skeleton] 50/50 trials  (1187s elapsed, ~0s remaining, 22 workers)
+  [poly8 | geo-follow | skeleton] 25/50 trials  (103s elapsed, ~103s remaining, 22 workers)
+  [poly8 | geo-follow | skeleton] 50/50 trials  (157s elapsed, ~0s remaining, 22 workers)
+  [poly8 | greedy-los | skeleton] 25/50 trials  (83s elapsed, ~83s remaining, 22 workers)
+  [poly8 | greedy-los | skeleton] 50/50 trials  (123s elapsed, ~0s remaining, 22 workers)
+  [poly8 | tsp-patrol | skeleton] 25/50 trials  (78s elapsed, ~78s remaining, 22 workers)
+  [poly8 | tsp-patrol | skeleton] 50/50 trials  (121s elapsed, ~0s remaining, 22 workers)
+  [poly8 | minmax-alpha | adversarial] 25/50 trials  (767s elapsed, ~767s remaining, 22 workers)
+  [poly8 | minmax-alpha | adversarial] 50/50 trials  (1162s elapsed, ~0s remaining, 22 workers)
+  [poly8 | minmax-alpha-vis | adversarial] 25/50 trials  (757s elapsed, ~757s remaining, 22 workers)
+  [poly8 | minmax-alpha-vis | adversarial] 50/50 trials  (1116s elapsed, ~0s remaining, 22 workers)
+  [poly8 | geo-follow | adversarial] 25/50 trials  (107s elapsed, ~107s remaining, 22 workers)
+  [poly8 | geo-follow | adversarial] 50/50 trials  (163s elapsed, ~0s remaining, 22 workers)
+  [poly8 | greedy-los | adversarial] 25/50 trials  (81s elapsed, ~81s remaining, 22 workers)
+  [poly8 | greedy-los | adversarial] 50/50 trials  (126s elapsed, ~0s remaining, 22 workers)
+  [poly8 | tsp-patrol | adversarial] 25/50 trials  (79s elapsed, ~79s remaining, 22 workers)
+  [poly8 | tsp-patrol | adversarial] 50/50 trials  (120s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly8        Min-Max α-Guard (Proposed)   Skeleton Evader         4.58±2.53  17.80±12.93 64.82±20.23%     0.0±0.1     1.4±1.0
+poly8        Min-Max +Vis Slack (Proposed) Skeleton Evader         4.74±2.55  18.57±13.06 65.59±20.76%     0.0±0.1     1.4±0.9
+poly8        Geo-Follow                   Skeleton Evader         4.81±2.67  19.85±14.95 61.86±22.97%     0.0±0.0     1.5±1.0
+poly8        Greedy-LOS                   Skeleton Evader         4.66±2.64  18.85±14.67 63.10±23.37%     0.0±0.0     1.6±1.1
+poly8        TSP-Patrol                   Skeleton Evader        10.54±4.53  44.12±40.39 10.93±14.28%     0.0±0.1     1.7±0.8
+poly8        Min-Max α-Guard (Proposed)   Adversarial Evader    59.30±56.92 219.09±121.42 93.66±12.66%     4.0±1.7     0.3±0.6
+poly8        Min-Max +Vis Slack (Proposed) Adversarial Evader    62.74±57.73 234.48±128.91 93.84±13.14%     3.8±1.8     0.3±0.6
+poly8        Geo-Follow                   Adversarial Evader    42.57±26.80 197.27±92.01 94.39±11.96%    16.1±52.2     0.3±0.6
+poly8        Greedy-LOS                   Adversarial Evader    42.57±26.80 197.27±92.01 94.39±11.96%    16.1±52.2     0.3±0.6
+poly8        TSP-Patrol                   Adversarial Evader   410.99±199.09 731.34±214.12 21.46±19.51%     1.7±1.1     1.8±0.6
+
+[SAVED] /app/benchmark_results/20261004_110644_table.txt
+[SAVED] /app/benchmark_results/20261004_110644_raw.csv

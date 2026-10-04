@@ -277,7 +277,11 @@ def get_affinity(data, grid_n: int, step: float, force: bool = False,
         return blob[key]['affinity'], blob[key]['road_dist']
     aff = corner_affinity(data, grid_n, step, progress=progress)
     road = corner_roadmap_distance(data)
-    blob[key] = {'affinity': aff, 'road_dist': road}
+    # update in place: a forced affinity recompute must not wipe partitions
+    # stored under the same key by save_partition (ilp/refined entries).
+    entry = blob.setdefault(key, {})
+    entry['affinity'] = aff
+    entry['road_dist'] = road
     _save_cache(blob)
     return aff, road
 

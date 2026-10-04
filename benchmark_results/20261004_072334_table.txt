@@ -1,0 +1,4 @@
+# polygons=['poly2'] strategies=['kernel-control'] evaders=['skeleton'] seeds=50 frames=600 sp=0.8 se=1.0 workers=22 sequential=False
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly2        Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25) Skeleton Evader         3.62±1.76   11.11±7.82 82.04±24.35%     0.0±0.1     0.7±0.7

@@ -1,0 +1,7 @@
+# polygons=['poly9'] strategies=['minmax-alpha', 'minmax-alpha-vis'] evaders=['skeleton', 'adversarial'] seeds=50 frames=600 sp=1.6 se=1.0 workers=22 sequential=False
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.18±0.34    2.57±1.94 92.05±14.70%     0.0±0.0     0.5±0.9
+poly9        Min-Max +Vis Slack (Proposed) Skeleton Evader         1.21±0.36    2.65±1.98 94.90±10.89%     0.0±0.0     0.3±0.8
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    10.85±13.85 113.83±110.68 87.41±26.48%     2.1±1.3     0.4±0.6
+poly9        Min-Max +Vis Slack (Proposed) Adversarial Evader    10.27±13.42 111.98±109.14 91.98±20.68%     2.4±2.0     0.3±0.5

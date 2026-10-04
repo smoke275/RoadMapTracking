@@ -1,0 +1,21 @@
+=== poly6 (22 workers) ===
+Corners: [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+KER coverage computed in 0.20s
+Total: 17 corners — [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+[INFO] ILP cover: 7/996 candidates (9 after domination pre-processing).
+Set cover solved in 0.003s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 474.24it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 11007.5397 sq units uncovered (2.8115% of total area 391517.94).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 403 nodes, 393 edges
+  [poly6 | kernel-control | skeleton] 25/50 trials  (38s elapsed, ~38s remaining, 22 workers)
+  [poly6 | kernel-control | skeleton] 50/50 trials  (61s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly6        Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25) Skeleton Evader         3.07±1.05    7.12±3.37 83.85±22.54%     0.0±0.0     0.5±0.7
+
+[SAVED] /app/benchmark_results/20261004_091402_table.txt
+[SAVED] /app/benchmark_results/20261004_091402_raw.csv

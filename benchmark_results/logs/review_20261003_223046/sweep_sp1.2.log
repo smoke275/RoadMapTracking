@@ -12,3 +12,19 @@ Set cover solved in 0.008s (7 guards selected)
 [SKEL] 419 nodes, 408 edges
   [poly9 | minmax-alpha | skeleton] 25/50 trials  (219s elapsed, ~219s remaining, 22 workers)
   [poly9 | minmax-alpha | skeleton] 50/50 trials  (327s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | skeleton] 25/50 trials  (229s elapsed, ~229s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | skeleton] 50/50 trials  (336s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (199s elapsed, ~199s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (315s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | adversarial] 25/50 trials  (207s elapsed, ~207s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | adversarial] 50/50 trials  (326s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.30±0.47    2.76±1.74 91.07±14.29%     0.0±0.0     0.5±0.9
+poly9        Min-Max +Vis Slack (Proposed) Skeleton Evader         1.37±0.49    2.97±1.87 91.82±12.88%     0.0±0.0     0.5±0.9
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader    22.15±22.21 177.61±127.83 82.91±26.21%     2.3±1.1     0.5±0.7
+poly9        Min-Max +Vis Slack (Proposed) Adversarial Evader    21.77±22.45 176.26±127.87 86.41±22.88%     2.4±1.6     0.5±0.6
+
+[SAVED] /app/benchmark_results/20261004_002724_table.txt
+[SAVED] /app/benchmark_results/20261004_002724_raw.csv

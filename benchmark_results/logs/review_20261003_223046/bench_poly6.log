@@ -1,0 +1,48 @@
+=== poly6 (22 workers) ===
+Corners: [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+KER coverage computed in 0.20s
+Total: 17 corners — [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+[INFO] ILP cover: 7/996 candidates (9 after domination pre-processing).
+Set cover solved in 0.003s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 471.65it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 11007.5397 sq units uncovered (2.8115% of total area 391517.94).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 403 nodes, 393 edges
+  [poly6 | minmax-alpha | skeleton] 25/50 trials  (284s elapsed, ~284s remaining, 22 workers)
+  [poly6 | minmax-alpha | skeleton] 50/50 trials  (425s elapsed, ~0s remaining, 22 workers)
+  [poly6 | minmax-alpha-vis | skeleton] 25/50 trials  (277s elapsed, ~277s remaining, 22 workers)
+  [poly6 | minmax-alpha-vis | skeleton] 50/50 trials  (445s elapsed, ~0s remaining, 22 workers)
+  [poly6 | geo-follow | skeleton] 25/50 trials  (47s elapsed, ~47s remaining, 22 workers)
+  [poly6 | geo-follow | skeleton] 50/50 trials  (75s elapsed, ~0s remaining, 22 workers)
+  [poly6 | greedy-los | skeleton] 25/50 trials  (34s elapsed, ~34s remaining, 22 workers)
+  [poly6 | greedy-los | skeleton] 50/50 trials  (51s elapsed, ~0s remaining, 22 workers)
+  [poly6 | tsp-patrol | skeleton] 25/50 trials  (32s elapsed, ~32s remaining, 22 workers)
+  [poly6 | tsp-patrol | skeleton] 50/50 trials  (49s elapsed, ~0s remaining, 22 workers)
+  [poly6 | minmax-alpha | adversarial] 25/50 trials  (284s elapsed, ~284s remaining, 22 workers)
+  [poly6 | minmax-alpha | adversarial] 50/50 trials  (431s elapsed, ~0s remaining, 22 workers)
+  [poly6 | minmax-alpha-vis | adversarial] 25/50 trials  (278s elapsed, ~278s remaining, 22 workers)
+  [poly6 | minmax-alpha-vis | adversarial] 50/50 trials  (413s elapsed, ~0s remaining, 22 workers)
+  [poly6 | geo-follow | adversarial] 25/50 trials  (50s elapsed, ~50s remaining, 22 workers)
+  [poly6 | geo-follow | adversarial] 50/50 trials  (78s elapsed, ~0s remaining, 22 workers)
+  [poly6 | greedy-los | adversarial] 25/50 trials  (35s elapsed, ~35s remaining, 22 workers)
+  [poly6 | greedy-los | adversarial] 50/50 trials  (54s elapsed, ~0s remaining, 22 workers)
+  [poly6 | tsp-patrol | adversarial] 25/50 trials  (32s elapsed, ~32s remaining, 22 workers)
+  [poly6 | tsp-patrol | adversarial] 50/50 trials  (54s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly6        Min-Max α-Guard (Proposed)   Skeleton Evader         3.10±1.30    7.19±3.23 82.38±22.23%     0.0±0.0     0.6±0.7
+poly6        Min-Max +Vis Slack (Proposed) Skeleton Evader         3.07±1.28    7.13±3.30 84.34±19.54%     0.0±0.0     0.6±0.7
+poly6        Geo-Follow                   Skeleton Evader         3.11±1.29    7.42±4.15 87.48±17.92%     0.0±0.0     0.5±0.6
+poly6        Greedy-LOS                   Skeleton Evader         3.12±1.29    7.44±4.12 87.15±18.18%     0.0±0.0     0.5±0.6
+poly6        TSP-Patrol                   Skeleton Evader         4.66±1.43   13.30±9.78 57.77±22.53%     0.0±0.0     1.1±0.5
+poly6        Min-Max α-Guard (Proposed)   Adversarial Evader   143.24±144.88 401.58±308.01 92.25±20.87%     1.7±0.9     0.2±0.5
+poly6        Min-Max +Vis Slack (Proposed) Adversarial Evader   140.84±145.67 396.76±303.32 92.62±20.90%     1.8±0.9     0.2±0.4
+poly6        Geo-Follow                   Adversarial Evader   119.85±121.86 379.18±249.05  96.70±9.99%     1.7±0.6     0.1±0.4
+poly6        Greedy-LOS                   Adversarial Evader   113.40±116.26 354.58±244.13  98.01±8.75%     1.6±0.6     0.1±0.2
+poly6        TSP-Patrol                   Adversarial Evader   619.54±281.70 1074.04±290.60 38.81±32.17%     1.1±0.4     1.2±0.6
+
+[SAVED] /app/benchmark_results/20261004_091259_table.txt
+[SAVED] /app/benchmark_results/20261004_091259_raw.csv

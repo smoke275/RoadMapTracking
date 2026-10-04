@@ -1,0 +1,48 @@
+=== poly7 (22 workers) ===
+Corners: [3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 28, 29]
+KER coverage computed in 0.06s
+Total: 12 corners — [3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 28, 29]
+[INFO] ILP cover: 7/526 candidates (7 after domination pre-processing).
+Set cover solved in 0.002s (7 guards selected)
+  0%|          | 0/4 [00:00<?, ?it/s]100%|██████████| 4/4 [00:00<00:00, 614.06it/s]
+[INFO] Geodesic graph built.
+[WARNING] Coverage gap: 8542.5000 sq units uncovered (2.3594% of total area 362062.34).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 376 nodes, 352 edges
+  [poly7 | minmax-alpha | skeleton] 25/50 trials  (171s elapsed, ~171s remaining, 22 workers)
+  [poly7 | minmax-alpha | skeleton] 50/50 trials  (267s elapsed, ~0s remaining, 22 workers)
+  [poly7 | minmax-alpha-vis | skeleton] 25/50 trials  (174s elapsed, ~174s remaining, 22 workers)
+  [poly7 | minmax-alpha-vis | skeleton] 50/50 trials  (276s elapsed, ~0s remaining, 22 workers)
+  [poly7 | geo-follow | skeleton] 25/50 trials  (29s elapsed, ~29s remaining, 22 workers)
+  [poly7 | geo-follow | skeleton] 50/50 trials  (47s elapsed, ~0s remaining, 22 workers)
+  [poly7 | greedy-los | skeleton] 25/50 trials  (16s elapsed, ~16s remaining, 22 workers)
+  [poly7 | greedy-los | skeleton] 50/50 trials  (26s elapsed, ~0s remaining, 22 workers)
+  [poly7 | tsp-patrol | skeleton] 25/50 trials  (16s elapsed, ~16s remaining, 22 workers)
+  [poly7 | tsp-patrol | skeleton] 50/50 trials  (26s elapsed, ~0s remaining, 22 workers)
+  [poly7 | minmax-alpha | adversarial] 25/50 trials  (179s elapsed, ~179s remaining, 22 workers)
+  [poly7 | minmax-alpha | adversarial] 50/50 trials  (275s elapsed, ~0s remaining, 22 workers)
+  [poly7 | minmax-alpha-vis | adversarial] 25/50 trials  (173s elapsed, ~173s remaining, 22 workers)
+  [poly7 | minmax-alpha-vis | adversarial] 50/50 trials  (272s elapsed, ~0s remaining, 22 workers)
+  [poly7 | geo-follow | adversarial] 25/50 trials  (29s elapsed, ~29s remaining, 22 workers)
+  [poly7 | geo-follow | adversarial] 50/50 trials  (48s elapsed, ~0s remaining, 22 workers)
+  [poly7 | greedy-los | adversarial] 25/50 trials  (17s elapsed, ~17s remaining, 22 workers)
+  [poly7 | greedy-los | adversarial] 50/50 trials  (27s elapsed, ~0s remaining, 22 workers)
+  [poly7 | tsp-patrol | adversarial] 25/50 trials  (17s elapsed, ~17s remaining, 22 workers)
+  [poly7 | tsp-patrol | adversarial] 50/50 trials  (28s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly7        Min-Max α-Guard (Proposed)   Skeleton Evader         1.73±0.79    4.15±4.55 83.26±27.07%     0.0±0.1     0.6±0.9
+poly7        Min-Max +Vis Slack (Proposed) Skeleton Evader         1.73±0.77    4.11±4.41 86.25±23.63%     0.0±0.1     0.6±0.8
+poly7        Geo-Follow                   Skeleton Evader         2.16±1.05    5.16±4.72 89.15±24.15%     0.0±0.0     0.5±1.0
+poly7        Greedy-LOS                   Skeleton Evader         2.19±1.04    5.19±4.69 92.02±19.48%     0.0±0.0     0.4±0.9
+poly7        TSP-Patrol                   Skeleton Evader         5.83±3.15  13.26±10.87 62.09±36.20%     0.0±0.0     0.9±0.8
+poly7        Min-Max α-Guard (Proposed)   Adversarial Evader    79.24±83.77 390.96±358.62 84.01±26.61%     1.5±0.8     0.5±0.5
+poly7        Min-Max +Vis Slack (Proposed) Adversarial Evader    81.54±82.13 410.98±349.27 89.46±15.65%     1.5±0.8     0.5±0.5
+poly7        Geo-Follow                   Adversarial Evader   123.14±95.11 476.15±192.20 95.45±11.92%     1.4±0.6     0.2±0.5
+poly7        Greedy-LOS                   Adversarial Evader   113.65±84.20 462.68±176.15 95.58±11.80%     1.4±0.6     0.2±0.4
+poly7        TSP-Patrol                   Adversarial Evader   768.61±434.86 1272.60±522.17 37.40±43.09%     1.1±0.3     0.7±0.5
+
+[SAVED] /app/benchmark_results/20261004_093536_table.txt
+[SAVED] /app/benchmark_results/20261004_093536_raw.csv

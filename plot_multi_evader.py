@@ -31,7 +31,7 @@ def main():
     ks = sorted({r['k'] for r in oracle})
     ms = sorted({r['m'] for r in oracle})
 
-    plt.rcParams.update({'font.size': 8, 'axes.labelsize': 8, 'legend.fontsize': 7,
+    plt.rcParams.update({'font.size': 11, 'axes.labelsize': 11, 'legend.fontsize': 10,
                          'xtick.labelsize': 7, 'ytick.labelsize': 7})
     fig, axes = plt.subplots(1, 3 if trials else 1, figsize=(7.0, 2.1), constrained_layout=True)
     axes = list(axes) if trials else [axes]
@@ -44,7 +44,7 @@ def main():
         ax.plot(ms, mean, 's:', color=COLOURS.get(k, 'k'), ms=3, lw=1)
     ax.axhline(1.0, color='0.6', lw=0.8, ls='--')
     ax.set_xlabel('evaders $m$'); ax.set_ylabel('oracle team $\\alpha$')
-    ax.set_title('oracle: 95th pct (solid), mean (dotted)', fontsize=8)
+    ax.set_title('oracle: 95th pct (solid), mean (dotted)', fontsize=11)
     ax.set_xticks(ms); ax.legend(frameon=False)
 
     if trials:
@@ -55,7 +55,7 @@ def main():
                         fmt='o-', color=COLOURS.get(k, 'k'), ms=4, capsize=2, label=f'$k={k}$')
         ax.axhline(1.0, color='0.6', lw=0.8, ls='--')
         ax.set_xlabel('evaders $m$'); ax.set_ylabel('mean achieved $\\alpha$')
-        ax.set_title('trials: timing', fontsize=8); ax.set_xticks(ms)
+        ax.set_title('trials: timing', fontsize=11); ax.set_xticks(ms)
 
         ax = axes[2]
         for k in ks:
@@ -63,7 +63,7 @@ def main():
             ax.errorbar(ms, [r['in_view_pct'][0] for r in rows], yerr=[r['in_view_pct'][1] for r in rows],
                         fmt='o-', color=COLOURS.get(k, 'k'), ms=4, capsize=2, label=f'$k={k}$')
         ax.set_xlabel('evaders $m$'); ax.set_ylabel('evaders in view (%)')
-        ax.set_title('trials: line of sight', fontsize=8); ax.set_xticks(ms); ax.set_ylim(0, 100)
+        ax.set_title('trials: line of sight', fontsize=11); ax.set_xticks(ms); ax.set_ylim(0, 100)
 
     fig.savefig(args.out)
     print(f'[SAVED] {args.out}')

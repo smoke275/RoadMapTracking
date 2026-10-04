@@ -1,0 +1,13 @@
+# polygons=['poly6'] strategies=['minmax-alpha', 'minmax-alpha-vis', 'geo-follow', 'greedy-los', 'tsp-patrol'] evaders=['skeleton', 'adversarial'] seeds=50 frames=600 sp=0.8 se=1.0 workers=22 sequential=False
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly6        Min-Max α-Guard (Proposed)   Skeleton Evader         3.10±1.30    7.19±3.23 82.38±22.23%     0.0±0.0     0.6±0.7
+poly6        Min-Max +Vis Slack (Proposed) Skeleton Evader         3.07±1.28    7.13±3.30 84.34±19.54%     0.0±0.0     0.6±0.7
+poly6        Geo-Follow                   Skeleton Evader         3.11±1.29    7.42±4.15 87.48±17.92%     0.0±0.0     0.5±0.6
+poly6        Greedy-LOS                   Skeleton Evader         3.12±1.29    7.44±4.12 87.15±18.18%     0.0±0.0     0.5±0.6
+poly6        TSP-Patrol                   Skeleton Evader         4.66±1.43   13.30±9.78 57.77±22.53%     0.0±0.0     1.1±0.5
+poly6        Min-Max α-Guard (Proposed)   Adversarial Evader   143.24±144.88 401.58±308.01 92.25±20.87%     1.7±0.9     0.2±0.5
+poly6        Min-Max +Vis Slack (Proposed) Adversarial Evader   140.84±145.67 396.76±303.32 92.62±20.90%     1.8±0.9     0.2±0.4
+poly6        Geo-Follow                   Adversarial Evader   119.85±121.86 379.18±249.05  96.70±9.99%     1.7±0.6     0.1±0.4
+poly6        Greedy-LOS                   Adversarial Evader   113.40±116.26 354.58±244.13  98.01±8.75%     1.6±0.6     0.1±0.2
+poly6        TSP-Patrol                   Adversarial Evader   619.54±281.70 1074.04±290.60 38.81±32.17%     1.1±0.4     1.2±0.6

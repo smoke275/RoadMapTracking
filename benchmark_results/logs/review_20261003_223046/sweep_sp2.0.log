@@ -1,0 +1,30 @@
+=== poly9 (22 workers) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.30s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] ILP cover: 7/1477 candidates (13 after domination pre-processing).
+Set cover solved in 0.008s (7 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 512.18it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | minmax-alpha | skeleton] 25/50 trials  (207s elapsed, ~207s remaining, 22 workers)
+  [poly9 | minmax-alpha | skeleton] 50/50 trials  (322s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | skeleton] 25/50 trials  (205s elapsed, ~205s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | skeleton] 50/50 trials  (321s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 25/50 trials  (208s elapsed, ~208s remaining, 22 workers)
+  [poly9 | minmax-alpha | adversarial] 50/50 trials  (308s elapsed, ~0s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | adversarial] 25/50 trials  (206s elapsed, ~206s remaining, 22 workers)
+  [poly9 | minmax-alpha-vis | adversarial] 50/50 trials  (312s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Skeleton Evader         1.14±0.26    2.20±1.05 91.78±15.61%     0.0±0.0     0.6±1.1
+poly9        Min-Max +Vis Slack (Proposed) Skeleton Evader         1.11±0.23    2.16±1.03 95.74±10.63%     0.0±0.0     0.3±0.9
+poly9        Min-Max α-Guard (Proposed)   Adversarial Evader      5.63±7.30 92.78±105.62 93.10±17.51%     7.3±37.1     0.3±0.5
+poly9        Min-Max +Vis Slack (Proposed) Adversarial Evader      5.35±7.26 86.54±107.26 94.97±17.06%     1.9±1.6     0.2±0.4
+
+[SAVED] /app/benchmark_results/20261004_015252_table.txt
+[SAVED] /app/benchmark_results/20261004_015252_raw.csv
