@@ -130,39 +130,44 @@ def main():
               f"{p['losd'][0]:8.1f} {p['losv'][0]:9.1f} {p['lag'][0]:6.2f} "
               f"{p['held'][0]:6.1f}")
 
-    # ---- figure: three summary bar panels --------------------------------
-    plt.rcParams.update({'font.size': 10})
+    # ---- figure: compact 2x2 mosaic for a single column ------------------
+    plt.rcParams.update({'font.size': 9})
     strategies = [s for s in ORDER if s in stats]
-    names = [LABELS[s] for s in strategies]
+    names = [{'alpha-guard': 'Min-Max', 'alpha-vis': '+Vis',
+              'geo-follow': 'Geo-Follow',
+              'naive-dijkstra': 'Naive Dijk.'}[s] for s in strategies]
     xs = list(range(len(strategies)))
     colors = ['C0', 'C9', 'C2', 'C3']
-    fig, axes = plt.subplots(1, 3, figsize=(8.6, 2.6))
+    fig = plt.figure(figsize=(3.6, 3.4))
+    gs = fig.add_gridspec(2, 2, height_ratios=[1, 1.15], hspace=0.3, wspace=0.52)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, :])
 
-    def bars(ax, key, ylabel, scale=1.0):
-        vals = [stats[s][key][0] * scale for s in strategies]
-        errs = [stats[s][key][1] * scale for s in strategies]
-        ax.bar(xs, vals, 0.62, yerr=errs, color=colors[:len(xs)], capsize=3)
-        ax.set_xticks(xs)
-        ax.set_xticklabels(names, rotation=20, fontsize=8, ha='right')
-        ax.set_ylabel(ylabel)
+    def bars(ax, key, ylabel):
+        vals = [stats[s][key][0] for s in strategies]
+        errs = [stats[s][key][1] for s in strategies]
+        ax.bar(xs, vals, 0.65, yerr=errs, color=colors[:len(xs)], capsize=2)
+        ax.set_xticks([])
+        ax.set_ylabel(ylabel, fontsize=8)
+        ax.tick_params(labelsize=8)
         ax.grid(alpha=0.3, axis='y')
 
-    bars(axes[0], 'arms', 'accel RMS (m/s$^2$)')
-    bars(axes[1], 'rev', 'command reversals / min')
-    ax = axes[2]
+    bars(ax1, 'arms', 'accel RMS (m/s$^2$)')
+    bars(ax2, 'rev', 'cmd reversals/min')
     losd = [stats[s]['losd'][0] for s in strategies]
     losv = [stats[s]['losv'][0] for s in strategies]
-    ax.bar([x - 0.19 for x in xs], losv, 0.36, color='0.65',
-           label='planner (ideal)')
-    ax.bar([x + 0.19 for x in xs], losd, 0.36, color='C2', label='drone')
-    ax.set_xticks(xs)
-    ax.set_xticklabels(names, rotation=20, fontsize=8, ha='right')
-    ax.set_ylabel('%LOS')
-    ax.set_ylim(0, 100)
-    ax.legend(fontsize=8, loc='lower right')
-    ax.grid(alpha=0.3, axis='y')
+    ax3.bar([x - 0.2 for x in xs], losv, 0.38, color='0.72', label='planner (ideal)')
+    ax3.bar([x + 0.2 for x in xs], losd, 0.38,
+            color=colors[:len(xs)], label='drone')
+    ax3.set_xticks(xs)
+    ax3.set_xticklabels(names, fontsize=8)
+    ax3.set_ylabel('%LOS', fontsize=8)
+    ax3.set_ylim(0, 100)
+    ax3.tick_params(labelsize=8)
+    ax3.legend(fontsize=7, loc='lower left', framealpha=0.9)
+    ax3.grid(alpha=0.3, axis='y')
 
-    fig.tight_layout()
     fig.savefig(args.out, bbox_inches='tight')
     print(f'[SAVED] {args.out}')
 
