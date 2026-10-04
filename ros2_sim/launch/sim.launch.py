@@ -23,7 +23,11 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import (DeclareLaunchArgument, EmitEvent,
+                            IncludeLaunchDescription, OpaqueFunction,
+                            RegisterEventHandler)
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -32,8 +36,9 @@ from launch_ros.actions import Node
 
 def _build(context, *args, **kwargs):
     pkg_share = get_package_share_directory('ros2_sim')
-    world_name = 'poly9_world'  # matches generate_world.py's f'{polygon_name}_world'
-    world_path = os.path.join(pkg_share, 'worlds', f'{world_name}.sdf')
+    world_name = 'poly9_world'  # SDF <world name=...> (same in both variants)
+    world_file = LaunchConfiguration('world').perform(context)
+    world_path = os.path.join(pkg_share, 'worlds', f'{world_file}.sdf')
     models_path = os.path.join(pkg_share, 'models')
     scene_info_path = os.path.join(pkg_share, 'worlds', 'scene_info.json')
 
@@ -89,6 +94,10 @@ def _build(context, *args, **kwargs):
             # /model/simple_drone/cmd_vel, which was only ever valid for
             # the plain VelocityControl plugin this model no longer uses.
             '/simple_drone/gazebo/command/twist@geometry_msgs/msg/Twist]ignition.msgs.Twist',
+            # MulticopterVelocityControl ignores twist commands until a
+            # Boolean true arrives on <robotNamespace>/<enableSubTopic> —
+            # without this the drone never lifts off.
+            '/simple_drone/enable@std_msgs/msg/Bool]ignition.msgs.Boolean',
             '/model/simple_drone/odometry@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
             '/model/simple_drone/pose@geometry_msgs/msg/PoseArray[ignition.msgs.Pose_V',
             '/model/simple_ground_robot/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist',
@@ -116,17 +125,47 @@ def _build(context, *args, **kwargs):
         condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
-    controller = Node(
-        package='ros2_sim', executable='pursuit_controller', output='screen',
-        parameters=[{'cruise_altitude': scene['drone_cruise_altitude_m']}],
-    )
+    mode = LaunchConfiguration('controller').perform(context)
+    if mode == 'none':
+        return [gz_sim, spawn_drone, spawn_ground_robot, bridge, rviz]
+    use_alpha = mode == 'alpha'
+    if use_alpha:
+        controller = Node(
+            package='ros2_sim', executable='alpha_guard_controller',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'strategy': LaunchConfiguration('strategy').perform(context),
+                'cruise_altitude': float(LaunchConfiguration('cruise_altitude').perform(context)),
+                'run_duration': float(LaunchConfiguration('run_duration').perform(context)),
+                'log_csv': LaunchConfiguration('log_csv').perform(context),
+            }],
+        )
+        evader = Node(
+            package='ros2_sim', executable='skeleton_evader', output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'seed': int(LaunchConfiguration('evader_seed').perform(context)),
+            }],
+        )
+    else:
+        controller = Node(
+            package='ros2_sim', executable='pursuit_controller', output='screen',
+            parameters=[{'cruise_altitude': scene['drone_cruise_altitude_m']}],
+        )
+        evader = Node(
+            package='ros2_sim', executable='evader_wanderer', output='screen',
+            parameters=[{'seed': int(LaunchConfiguration('evader_seed').perform(context))}],
+        )
 
-    evader = Node(
-        package='ros2_sim', executable='evader_wanderer', output='screen',
-        parameters=[{'seed': int(LaunchConfiguration('evader_seed').perform(context))}],
-    )
+    # When the controller finishes its run_duration it exits; tear the
+    # whole trial down with it so batch runs don't idle until timeout.
+    on_done = RegisterEventHandler(OnProcessExit(
+        target_action=controller,
+        on_exit=[EmitEvent(event=Shutdown(reason='run complete'))]))
 
-    return [gz_sim, spawn_drone, spawn_ground_robot, bridge, rviz, controller, evader]
+    return [gz_sim, spawn_drone, spawn_ground_robot, bridge, rviz,
+            controller, evader, on_done]
 
 
 def generate_launch_description():
@@ -137,5 +176,23 @@ def generate_launch_description():
                               description='Run Gazebo server-only, no GUI (for testing/CI)'),
         DeclareLaunchArgument('evader_seed', default_value='42',
                               description='RNG seed for the evader wander pattern (reproducible A/B runs)'),
+        DeclareLaunchArgument('controller', default_value='alpha',
+                              description="'alpha' = real Min-Max alpha-Guard "
+                                          "planner + skeleton evader; 'legacy' "
+                                          "= old direct-pursuit stand-in"),
+        DeclareLaunchArgument('strategy', default_value='alpha-guard',
+                              description='alpha-guard | naive-dijkstra | geo-follow'),
+        DeclareLaunchArgument('world', default_value='poly9_world',
+                              description='World file (no .sdf): poly9_world '
+                                          'or poly9_world_fast (unthrottled)'),
+        DeclareLaunchArgument('cruise_altitude', default_value='4.0',
+                              description='Drone cruise altitude in metres '
+                                          '(below the 3 m walls: real occlusion)'),
+        DeclareLaunchArgument('run_duration', default_value='0.0',
+                              description='Stop logging after this many sim '
+                                          'seconds (0 = run forever)'),
+        DeclareLaunchArgument('log_csv', default_value='',
+                              description='Metrics CSV path (empty = auto '
+                                          'under /app/ros2_sim/logs/)'),
         OpaqueFunction(function=_build),
     ])

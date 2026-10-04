@@ -1,0 +1,12 @@
+strategies: alpha-vis  seeds: 1 2 3 4 5  duration: 180s
+2026-10-04 12:33:29 START alpha-vis seed=1
+2026-10-04 12:34:26 DONE  alpha-vis seed=1 rows=228
+2026-10-04 12:34:26 START alpha-vis seed=2
+2026-10-04 12:35:23 DONE  alpha-vis seed=2 rows=226
+2026-10-04 12:35:23 START alpha-vis seed=3
+2026-10-04 12:36:21 DONE  alpha-vis seed=3 rows=236
+2026-10-04 12:36:21 START alpha-vis seed=4
+2026-10-04 12:37:20 DONE  alpha-vis seed=4 rows=235
+2026-10-04 12:37:20 START alpha-vis seed=5
+2026-10-04 12:38:19 DONE  alpha-vis seed=5 rows=236
+2026-10-04 12:38:19 ALL TRIALS FINISHED

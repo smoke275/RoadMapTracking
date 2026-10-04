@@ -43,6 +43,8 @@ setup(
         'console_scripts': [
             'pursuit_controller = ros2_sim.pursuit_controller:main',
             'evader_wanderer = ros2_sim.evader_wanderer:main',
+            'alpha_guard_controller = ros2_sim.alpha_guard_controller:main',
+            'skeleton_evader = ros2_sim.skeleton_evader:main',
         ],
     },
 )

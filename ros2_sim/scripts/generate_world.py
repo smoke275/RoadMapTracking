@@ -70,7 +70,8 @@ def _wall_model_sdf(name, x1, y1, x2, y2, height, thickness):
 
 
 def generate(polygon_name: str, scale: float, clearance: float,
-            wall_height: float, wall_thickness: float, out_path: str):
+            wall_height: float, wall_thickness: float, out_path: str,
+            real_time_factor: float = 1.0, wall_offset: float = 0.0):
     poly = clean_polygon(load_poly(polygon_name))
     pts_units = [(p.x(), p.y()) for p in poly]
     shp_units = ShapelyPolygon(pts_units)
@@ -82,7 +83,18 @@ def generate(polygon_name: str, scale: float, clearance: float,
 
     pts_m = [(x * scale, y * scale) for x, y in pts_units]
     shp_m = ShapelyPolygon(pts_m)
-    minx, miny, maxx, maxy = shp_m.bounds
+
+    # Optionally push the physical walls outward from the planner polygon,
+    # so that geodesic roadmap paths — which hug reflex corners of the
+    # ORIGINAL polygon by construction — keep `wall_offset` metres of real
+    # clearance everywhere. Planner coordinates are unchanged; only the
+    # built walls move. Mitred join keeps walls straight at corners.
+    if wall_offset > 0:
+        wall_poly = shp_m.buffer(wall_offset, join_style=2, mitre_limit=5.0)
+        wall_pts = list(wall_poly.exterior.coords)[:-1]
+    else:
+        wall_pts = pts_m
+    minx, miny, maxx, maxy = (ShapelyPolygon(wall_pts)).bounds
 
     # Spawn points: evader at a point comfortably inside the dilated
     # (clearance-eroded) region so it starts with real clearance from every
@@ -98,10 +110,10 @@ def generate(polygon_name: str, scale: float, clearance: float,
     drone_spawn = (spawn.x, spawn.y, drone_cruise_alt)
 
     walls_xml = []
-    n = len(pts_m)
+    n = len(wall_pts)
     for i in range(n):
-        x1, y1 = pts_m[i]
-        x2, y2 = pts_m[(i + 1) % n]
+        x1, y1 = wall_pts[i]
+        x2, y2 = wall_pts[(i + 1) % n]
         if math.hypot(x2 - x1, y2 - y1) < 1e-6:
             continue
         walls_xml.append(_wall_model_sdf(f'wall_{i}', x1, y1, x2, y2,
@@ -112,7 +124,7 @@ def generate(polygon_name: str, scale: float, clearance: float,
   <world name='{polygon_name}_world'>
     <physics name='default_physics' type='ode'>
       <max_step_size>0.001</max_step_size>
-      <real_time_factor>1.0</real_time_factor>
+      <real_time_factor>{real_time_factor}</real_time_factor>
     </physics>
     <!-- Plugin filenames verified against the actual installed Gazebo
          (Ignition Fortress / Gazebo 6, shipped in osrf/ros:humble-desktop-full)
@@ -157,6 +169,7 @@ def generate(polygon_name: str, scale: float, clearance: float,
         f.write(sdf)
 
     scene_info = {
+        'wall_offset_m': wall_offset,
         'polygon': polygon_name,
         'scale_m_per_unit': scale,
         'wall_height_m': wall_height,
@@ -213,9 +226,19 @@ def main():
                         help='Wall thickness in meters (default: 0.1)')
     parser.add_argument('--out', default='ros2_sim/worlds/poly9_world.sdf',
                         help='Output SDF file path')
+    parser.add_argument('--real-time-factor', type=float, default=1.0,
+                        help='Gazebo real_time_factor; 0 = unthrottled, run '
+                             'as fast as the CPU allows (default: 1.0)')
+    parser.add_argument('--wall-offset', type=float, default=0.0,
+                        help='Push physical walls outward by this many metres '
+                             'so roadmap paths that hug reflex corners keep '
+                             'real clearance (default: 0, walls on the '
+                             'planner polygon boundary)')
     args = parser.parse_args()
     generate(args.polygon, args.scale, args.clearance, args.wall_height,
-             args.wall_thickness, args.out)
+             args.wall_thickness, args.out,
+             real_time_factor=args.real_time_factor,
+             wall_offset=args.wall_offset)
 
 
 if __name__ == '__main__':

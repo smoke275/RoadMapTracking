@@ -1,0 +1,85 @@
+[INFO] [launch]: All log files can be found below /tmp/.ros/log/2026-10-04-19-33-30-429581-Aegis-RS2-29
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [ign gazebo-1]: process started with pid [30]
+[INFO] [create-2]: process started with pid [32]
+[INFO] [create-3]: process started with pid [35]
+[INFO] [parameter_bridge-4]: process started with pid [37]
+[INFO] [alpha_guard_controller-5]: process started with pid [39]
+[INFO] [skeleton_evader-6]: process started with pid [41]
+[create-3] [INFO] [1791142410.562666709] [ros_gz_sim]: Requesting list of world names.
+[create-2] [INFO] [1791142410.562677841] [ros_gz_sim]: Requesting list of world names.
+[parameter_bridge-4] [INFO] [1791142410.573176088] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (ignition.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.573779007] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/simple_drone/gazebo/command/twist (geometry_msgs/msg/Twist) -> /simple_drone/gazebo/command/twist (ignition.msgs.Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.574755879] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/simple_drone/enable (std_msgs/msg/Bool) -> /simple_drone/enable (ignition.msgs.Boolean)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.575065802] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/simple_drone/odometry (ignition.msgs.Odometry) -> /model/simple_drone/odometry (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.575661306] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/simple_drone/pose (ignition.msgs.Pose_V) -> /model/simple_drone/pose (geometry_msgs/msg/PoseArray)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.575870250] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/model/simple_ground_robot/cmd_vel (geometry_msgs/msg/Twist) -> /model/simple_ground_robot/cmd_vel (ignition.msgs.Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.576019332] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/simple_ground_robot/odometry (ignition.msgs.Odometry) -> /model/simple_ground_robot/odometry (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1791142410.576169154] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/poly9_world/model/simple_ground_robot/link/chassis/sensor/chassis_contact/contact (ignition.msgs.Contacts) -> /world/poly9_world/model/simple_ground_robot/link/chassis/sensor/chassis_contact/contact (ros_gz_interfaces/msg/Contacts)] (Lazy 0)
+[alpha_guard_controller-5] /usr/local/lib/python3.10/dist-packages/matplotlib/projections/__init__.py:63: UserWarning: Unable to import Axes3D. This may be due to multiple versions of Matplotlib being installed (e.g. as a system package and as a pip package). As a result, the 3D projection is not available.
+[alpha_guard_controller-5]   warnings.warn("Unable to import Axes3D. This may be due to multiple versions of "
+[skeleton_evader-6] /usr/local/lib/python3.10/dist-packages/matplotlib/projections/__init__.py:63: UserWarning: Unable to import Axes3D. This may be due to multiple versions of Matplotlib being installed (e.g. as a system package and as a pip package). As a result, the 3D projection is not available.
+[skeleton_evader-6]   warnings.warn("Unable to import Axes3D. This may be due to multiple versions of "
+[create-3] [INFO] [1791142411.019233180] [ros_gz_sim]: Requested creation of entity.
+[create-3] [INFO] [1791142411.019283645] [ros_gz_sim]: OK creation of entity.
+[create-2] [INFO] [1791142411.020162091] [ros_gz_sim]: Requested creation of entity.
+[create-2] [INFO] [1791142411.020189429] [ros_gz_sim]: OK creation of entity.
+[INFO] [create-2]: process has finished cleanly [pid 32]
+[INFO] [create-3]: process has finished cleanly [pid 35]
+[skeleton_evader-6] [INFO] [1791142411.137572063] [skeleton_evader]: building pipeline for poly9 ...
+[alpha_guard_controller-5] [INFO] [1791142411.137591883] [alpha_guard_controller]: building KER pipeline for poly9 ...
+[skeleton_evader-6] [INFO] [1791142411.170620353] [skeleton_evader]: skeleton ready in 0.0s (419 nodes)
+[alpha_guard_controller-5] [INFO] [1791142411.454001177] [alpha_guard_controller]: pipeline ready in 0.3s (17 corners, scale 0.05 m/unit)
+[alpha_guard_controller-5] [INFO] [1791142411.454703243] [alpha_guard_controller]: strategy=alpha-vis  logging to /app/ros2_sim/logs/trials/20261004_123329_alpha-vis_seed1.csv
+[skeleton_evader-6] [INFO] [1791142412.710279541] [skeleton_evader]: virtual evader initialised at (81.81506846132815, 21.749925551017764)
+[parameter_bridge-4] [INFO] [1791142412.710427488] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[alpha_guard_controller-5] [INFO] [1791142412.755979680] [alpha_guard_controller]: virtual pursuer initialised at (44.39643181635131, 94.99483812907293)
+[parameter_bridge-4] [INFO] [1791142413.194208169] [ros_gz_bridge]: Passing message from ROS std_msgs/msg/Bool to Gazebo gz.msgs.Boolean (showing msg only once per type)
+[alpha_guard_controller-5] [INFO] [1791142461.645980962] [alpha_guard_controller]: RUN COMPLETE at sim t=180.8s
+[alpha_guard_controller-5] [CACHE] Loaded.
+[alpha_guard_controller-5] [SKEL] Building Voronoi skeleton…
+[alpha_guard_controller-5] [SKEL] 419 nodes, 408 edges
+[INFO] [alpha_guard_controller-5]: process has finished cleanly [pid 39]
+[INFO] [skeleton_evader-6]: sending signal 'SIGINT' to process[skeleton_evader-6]
+[INFO] [parameter_bridge-4]: sending signal 'SIGINT' to process[parameter_bridge-4]
+[INFO] [ign gazebo-1]: sending signal 'SIGINT' to process[ign gazebo-1]
+[parameter_bridge-4] [INFO] [1791142461.841488427] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[skeleton_evader-6] [CACHE] Loaded.
+[skeleton_evader-6] [SKEL] Building Voronoi skeleton…
+[skeleton_evader-6] [SKEL] 419 nodes, 408 edges
+[skeleton_evader-6] Traceback (most recent call last):
+[skeleton_evader-6]   File "/ros2_ws/install/ros2_sim/lib/python3.10/site-packages/ros2_sim/skeleton_evader.py", line 140, in main
+[skeleton_evader-6]     rclpy.spin(node)
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+[skeleton_evader-6]     executor.spin_once()
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 808, in spin_once
+[skeleton_evader-6]     self._spin_once_impl(timeout_sec)
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 797, in _spin_once_impl
+[skeleton_evader-6]     handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 780, in wait_for_ready_callbacks
+[skeleton_evader-6]     return next(self._cb_iter)
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 644, in _wait_for_ready_callbacks
+[skeleton_evader-6]     context_stack.enter_context(waitable)
+[skeleton_evader-6]   File "/usr/lib/python3.10/contextlib.py", line 482, in enter_context
+[skeleton_evader-6]     def enter_context(self, cm):
+[skeleton_evader-6] KeyboardInterrupt
+[skeleton_evader-6] 
+[skeleton_evader-6] During handling of the above exception, another exception occurred:
+[skeleton_evader-6] 
+[skeleton_evader-6] Traceback (most recent call last):
+[skeleton_evader-6]   File "/ros2_ws/install/ros2_sim/lib/ros2_sim/skeleton_evader", line 33, in <module>
+[skeleton_evader-6]     sys.exit(load_entry_point('ros2-sim==0.1.0', 'console_scripts', 'skeleton_evader')())
+[skeleton_evader-6]   File "/ros2_ws/install/ros2_sim/lib/python3.10/site-packages/ros2_sim/skeleton_evader.py", line 143, in main
+[skeleton_evader-6]     rclpy.shutdown()
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+[skeleton_evader-6]     _shutdown(context=context)
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+[skeleton_evader-6]     return context.shutdown()
+[skeleton_evader-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+[skeleton_evader-6]     self.__context.shutdown()
+[skeleton_evader-6] rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+[INFO] [parameter_bridge-4]: process has finished cleanly [pid 37]
+[ERROR] [skeleton_evader-6]: process has died [pid 41, exit code 1, cmd '/ros2_ws/install/ros2_sim/lib/ros2_sim/skeleton_evader --ros-args --params-file /tmp/launch_params_k3y4bt4h'].
+[ERROR] [ign gazebo-1]: process[ign gazebo-1] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[INFO] [ign gazebo-1]: sending signal 'SIGTERM' to process[ign gazebo-1]
+[ERROR] [ign gazebo-1]: process has died [pid 30, exit code -15, cmd 'ruby /usr/bin/ign gazebo -r -s /ros2_ws/install/ros2_sim/share/ros2_sim/worlds/poly9_world_fast.sdf --force-version 6'].

@@ -1,0 +1,32 @@
+strategies: alpha-guard naive-dijkstra geo-follow  seeds: 1 2 3 4 5  duration: 180s
+2026-10-04 12:18:31 START alpha-guard seed=1
+2026-10-04 12:19:31 DONE  alpha-guard seed=1 rows=244
+2026-10-04 12:19:31 START alpha-guard seed=2
+2026-10-04 12:20:27 DONE  alpha-guard seed=2 rows=224
+2026-10-04 12:20:27 START alpha-guard seed=3
+2026-10-04 12:21:28 DONE  alpha-guard seed=3 rows=247
+2026-10-04 12:21:28 START alpha-guard seed=4
+2026-10-04 12:22:25 DONE  alpha-guard seed=4 rows=228
+2026-10-04 12:22:25 START alpha-guard seed=5
+2026-10-04 12:23:25 DONE  alpha-guard seed=5 rows=241
+2026-10-04 12:23:25 START naive-dijkstra seed=1
+2026-10-04 12:24:22 DONE  naive-dijkstra seed=1 rows=225
+2026-10-04 12:24:22 START naive-dijkstra seed=2
+2026-10-04 12:25:20 DONE  naive-dijkstra seed=2 rows=234
+2026-10-04 12:25:20 START naive-dijkstra seed=3
+2026-10-04 12:26:20 DONE  naive-dijkstra seed=3 rows=235
+2026-10-04 12:26:20 START naive-dijkstra seed=4
+2026-10-04 12:27:21 DONE  naive-dijkstra seed=4 rows=250
+2026-10-04 12:27:21 START naive-dijkstra seed=5
+2026-10-04 12:28:17 DONE  naive-dijkstra seed=5 rows=228
+2026-10-04 12:28:17 START geo-follow seed=1
+2026-10-04 12:29:18 DONE  geo-follow seed=1 rows=902
+2026-10-04 12:29:18 START geo-follow seed=2
+2026-10-04 12:30:18 DONE  geo-follow seed=2 rows=902
+2026-10-04 12:30:18 START geo-follow seed=3
+2026-10-04 12:31:18 DONE  geo-follow seed=3 rows=902
+2026-10-04 12:31:18 START geo-follow seed=4
+2026-10-04 12:32:20 DONE  geo-follow seed=4 rows=902
+2026-10-04 12:32:20 START geo-follow seed=5
+2026-10-04 12:33:20 DONE  geo-follow seed=5 rows=902
+2026-10-04 12:33:20 ALL TRIALS FINISHED

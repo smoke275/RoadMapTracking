@@ -8,9 +8,22 @@ FROM osrf/ros:humble-desktop-full
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
+    build-essential \
+    swig \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir shapely
+# shapely for scripts/generate_world.py, the rest for running the actual
+# KER / min-max-alpha planner (ker_pipeline.py and friends) inside this
+# image as a ROS 2 node, with the main repo bind-mounted at /app and
+# PYTHONPATH=/app — same dependency set as the main roadmaptracking image
+# (visilibity needs build-essential + swig to compile; PyQt5 is imported
+# by ker_pipeline at module level but never opens a display here).
+# numpy<2 keeps ROS Humble's dist-packages ecosystem happy; scipy is
+# force-upgraded past Ubuntu's 1.8 because the guard-set ILP needs
+# scipy.optimize.milp (scipy >= 1.9).
+RUN pip3 install --no-cache-dir --upgrade \
+    'numpy<2' 'scipy>=1.10' shapely pyclipper pyvisgraph tqdm visilibity \
+    PyQt5 matplotlib seaborn bidict pygame
 
 ENV ROS_DOMAIN_ID=42
 

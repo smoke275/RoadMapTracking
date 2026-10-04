@@ -3,7 +3,7 @@
   <world name='poly9_world'>
     <physics name='default_physics' type='ode'>
       <max_step_size>0.001</max_step_size>
-      <real_time_factor>1.0</real_time_factor>
+      <real_time_factor>4.0</real_time_factor>
     </physics>
     <!-- Plugin filenames verified against the actual installed Gazebo
          (Ignition Fortress / Gazebo 6, shipped in osrf/ros:humble-desktop-full)
