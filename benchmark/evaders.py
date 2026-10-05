@@ -220,7 +220,9 @@ class AdversarialEvader:
     def _geo_path(self, target):
         try:
             sp = self.data.geodesic.shortest_path(self.pos, list(target))
-        except KeyError:
+        except (KeyError, ValueError):   # ValueError: pyvisgraph acos
+                                         # domain error on near-collinear
+                                         # viewpoints at polygon vertices
             with suppress_output():
                 raw = self.data.env.shortest_path(
                     vis.Point(self.pos[0], self.pos[1]),

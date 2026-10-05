@@ -24,7 +24,7 @@ S_STAR = {1: 1.682, 2: 1.134, 3: 1.004}   # poly9, Table IV
 
 
 def load_k1_sweep():
-    """ratio -> {(strategy, evader): {metric: mean}} from the sweep runs."""
+    """ratio -> {(strategy, evader, metric): mean} from the sweep runs."""
     out = {}
     for f in sorted(glob.glob('benchmark_results/*_table.txt')):
         head = open(f).readline()
@@ -41,6 +41,25 @@ def load_k1_sweep():
                     if v:
                         agg[(s, e, key)] = st.mean(v)
         out[sp] = agg
+    return dict(sorted(out.items()))
+
+
+def load_escaping_sweep():
+    """ratio -> {strategy: mean escapes} from the escaping-adversary runs."""
+    out = {}
+    for f in sorted(glob.glob('benchmark_results/*_table.txt')):
+        head = open(f).readline()
+        if "evaders=['escaping']" not in head or 'seeds=50' not in head:
+            continue
+        sp = float(head.split('sp=')[1].split()[0])
+        rows = list(csv.DictReader(open(f.replace('_table.txt', '_raw.csv'))))
+        agg = {}
+        for s in ('minmax-alpha', 'minmax-alpha-vis', 'geo-follow', 'greedy-los'):
+            v = [float(r['n_escape']) for r in rows if r['strategy'] == s]
+            if v:
+                agg[s] = st.mean(v)
+        if agg:
+            out[sp] = agg
     return dict(sorted(out.items()))
 
 
@@ -73,11 +92,15 @@ def main():
     ax.legend(fontsize=9, loc='lower right'); mark_sstar(ax)
 
     ax = axes[1]
-    for s, sty in styles.items():
-        ax.plot(ratios, [sweep[r][(s, 'adversarial', 'n_escape')] for r in ratios],
-                lw=1.6, ms=4, **sty)
-    ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('escapes/trial (adversarial)')
-    mark_sstar(ax)
+    esc = load_escaping_sweep()
+    e_ratios = list(esc)
+    for s, sty in [('minmax-alpha', dict(color='C0', marker='o', label='Min-Max')),
+                   ('minmax-alpha-vis', dict(color='C9', marker='s', label='+Vis')),
+                   ('geo-follow', dict(color='C2', marker='^', label='Geo-Follow')),
+                   ('greedy-los', dict(color='C3', marker='v', label='Greedy-LOS'))]:
+        ax.plot(e_ratios, [esc[r].get(s) for r in e_ratios], lw=1.6, ms=4, **sty)
+    ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('escapes/trial (escaping adv.)')
+    ax.legend(fontsize=8, loc='upper right'); mark_sstar(ax)
 
     if args.team_jsons:
         team = {}   # sp -> {k: in_view}

@@ -760,7 +760,7 @@ def compute_path_lengths(ex: float, ey: float, data: SimulationData) -> dict:
         pt_b = [data.poly[cors].x(), data.poly[cors].y()]
         try:
             sp = data.geodesic.shortest_path(pt_a, pt_b)
-        except KeyError:
+        except (KeyError, ValueError):
             with suppress_output():
                 raw = data.env.shortest_path(
                     vis.Point(ex, ey),
