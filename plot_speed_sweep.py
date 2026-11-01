@@ -72,14 +72,19 @@ def main():
     sweep = load_k1_sweep()
     ratios = list(sweep)
     n_panels = 3 if args.team_jsons else 2
-    fig, axes = plt.subplots(1, n_panels, figsize=(3.5 * n_panels, 2.9))
-    plt.rcParams.update({'font.size': 11})
+    fig, axes = plt.subplots(1, n_panels, figsize=(3.2 * n_panels, 2.25))
+    plt.rcParams.update({'font.size': 10})
 
-    def mark_sstar(ax, ks=(1,)):
+    def mark_sstar(ax, ks=(1,), y_frac=0.94):
+        ymin, ymax = ax.get_ylim()
+        y_pos = ymin + y_frac * (ymax - ymin)
         for k in ks:
-            ax.axvline(S_STAR[k], color='gray', ls=':', lw=1.2)
-            ax.text(S_STAR[k], ax.get_ylim()[1], f' $s^\\star_{{{k}}}$' if k > 1
-                    else ' $s^\\star$', ha='left', va='top', fontsize=10, color='gray')
+            ax.axvline(S_STAR[k], color='0.45', ls=':', lw=1.1)
+            lbl = f'$s^\\star_{{{k}}}$' if k > 1 else '$s^\\star$'
+            ha = 'right' if k == 3 else 'left'
+            dx = -0.02 if k == 3 else 0.02
+            ax.text(S_STAR[k] + dx, y_pos, lbl, ha=ha, va='top',
+                    fontsize=9, color='0.35')
 
     styles = {('minmax-alpha'): dict(color='C0', marker='o', label='Min-Max'),
               ('minmax-alpha-vis'): dict(color='C1', marker='s', label='Min-Max +Vis')}
@@ -87,9 +92,10 @@ def main():
     ax = axes[0]
     for s, sty in styles.items():
         ax.plot(ratios, [sweep[r][(s, 'skeleton', 'los_pct')] for r in ratios],
-                lw=1.6, ms=4, **sty)
+                lw=1.5, ms=3.8, **sty)
+    ax.set_ylim(79.5, 97.2)
     ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('%LOS (skeleton)')
-    ax.legend(fontsize=9, loc='lower right'); mark_sstar(ax)
+    ax.legend(fontsize=8.5, loc='lower right'); mark_sstar(ax)
 
     ax = axes[1]
     esc = load_escaping_sweep()
@@ -98,9 +104,10 @@ def main():
                    ('minmax-alpha-vis', dict(color='C9', marker='s', label='+Vis')),
                    ('geo-follow', dict(color='C2', marker='^', label='Geo-Follow')),
                    ('greedy-los', dict(color='C3', marker='v', label='Greedy-LOS'))]:
-        ax.plot(e_ratios, [esc[r].get(s) for r in e_ratios], lw=1.6, ms=4, **sty)
+        ax.plot(e_ratios, [esc[r].get(s) for r in e_ratios], lw=1.5, ms=3.8, **sty)
+    ax.set_ylim(0.3, 1.52)
     ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('escapes/trial (escaping adv.)')
-    ax.legend(fontsize=8, loc='upper right'); mark_sstar(ax)
+    ax.legend(fontsize=8, loc='lower left', framealpha=0.9); mark_sstar(ax)
 
     if args.team_jsons:
         team = {}   # sp -> {k: in_view}
@@ -112,14 +119,15 @@ def main():
         ax = axes[2]
         for k, c in [(1, 'C0'), (2, 'C2'), (3, 'C3')]:
             ax.plot(list(team), [team[r][k] for r in team], color=c,
-                    marker='o', ms=4, lw=1.6, label=f'$k={k}$')
+                    marker='o', ms=3.8, lw=1.5, label=f'$k={k}$')
+        ax.set_ylim(77.0, 96.8)
         ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('% in view ($m=1$)')
-        ax.legend(fontsize=9, loc='lower right'); mark_sstar(ax, ks=(1, 2, 3))
+        ax.legend(fontsize=8.5, loc='lower right'); mark_sstar(ax, ks=(1, 2, 3), y_frac=0.92)
 
     for ax in axes:
         ax.grid(alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(args.out, bbox_inches='tight')
+    fig.tight_layout(pad=0.3, w_pad=0.8)
+    fig.savefig(args.out, bbox_inches='tight', pad_inches=0.02)
     print(f'[SAVED] {args.out}')
 
 
