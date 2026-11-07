@@ -46,7 +46,48 @@ def _narrowest_passage(shp: ShapelyPolygon) -> float:
     return lo
 
 
-def _wall_model_sdf(name, x1, y1, x2, y2, height, thickness):
+# PBR materials (textured walls + ground, sky, warmer ambient), copied from
+# CodeICRA25/icra25_ros2 (scripts/stylize_world.py there). The texture
+# files live in worlds/textures/ and the <albedo_map> paths are relative to
+# the world file, so the installed layout share/ros2_sim/worlds/textures/
+# must be kept (see setup.py). PBR needs the ogre2 render engine, which is
+# the Fortress GUI default; the plain flat-grey materials are kept behind
+# --plain for the ogre1 fallback.
+WALL_MATERIAL_TEXTURED = """<material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+            <pbr><metal>
+              <albedo_map>textures/wall_27.jpg</albedo_map>
+              <normal_map>textures/wall_27_n.jpg</normal_map>
+              <roughness_map>textures/wall_27_r.jpg</roughness_map>
+              <metalness>0.0</metalness>
+            </metal></pbr>
+          </material>"""
+WALL_MATERIAL_PLAIN = """<material>
+            <ambient>0.7 0.7 0.72 1</ambient>
+            <diffuse>0.75 0.75 0.77 1</diffuse>
+          </material>"""
+GROUND_MATERIAL_TEXTURED = """<material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <pbr><metal>
+              <albedo_map>textures/ground.jpg</albedo_map>
+              <normal_map>textures/ground_n.jpg</normal_map>
+              <roughness_map>textures/ground_r.jpg</roughness_map>
+              <metalness>0.0</metalness>
+            </metal></pbr>
+          </material>"""
+GROUND_MATERIAL_PLAIN = "<material><ambient>0.5 0.5 0.5 1</ambient></material>"
+SCENE_TEXTURED = """    <scene>
+      <ambient>0.55 0.55 0.6 1</ambient>
+      <background>0.55 0.75 0.95 1</background>
+      <sky></sky>
+      <grid>false</grid>
+    </scene>
+"""
+
+
+def _wall_model_sdf(name, x1, y1, x2, y2, height, thickness, material):
     length = math.hypot(x2 - x1, y2 - y1)
     mx, my = (x1 + x2) / 2, (y1 + y2) / 2
     yaw = math.atan2(y2 - y1, x2 - x1)
@@ -59,10 +100,7 @@ def _wall_model_sdf(name, x1, y1, x2, y2, height, thickness):
         </collision>
         <visual name='visual'>
           <geometry><box><size>{length:.4f} {thickness:.4f} {height:.4f}</size></box></geometry>
-          <material>
-            <ambient>0.7 0.7 0.72 1</ambient>
-            <diffuse>0.75 0.75 0.77 1</diffuse>
-          </material>
+          {material}
         </visual>
       </link>
     </model>
@@ -71,7 +109,8 @@ def _wall_model_sdf(name, x1, y1, x2, y2, height, thickness):
 
 def generate(polygon_name: str, scale: float, clearance: float,
             wall_height: float, wall_thickness: float, out_path: str,
-            real_time_factor: float = 1.0, wall_offset: float = 0.0):
+            real_time_factor: float = 1.0, wall_offset: float = 0.0,
+            textured: bool = True):
     poly = clean_polygon(load_poly(polygon_name))
     pts_units = [(p.x(), p.y()) for p in poly]
     shp_units = ShapelyPolygon(pts_units)
@@ -109,6 +148,10 @@ def generate(polygon_name: str, scale: float, clearance: float,
     drone_cruise_alt = wall_height + 1.5
     drone_spawn = (spawn.x, spawn.y, drone_cruise_alt)
 
+    wall_material = WALL_MATERIAL_TEXTURED if textured else WALL_MATERIAL_PLAIN
+    ground_material = GROUND_MATERIAL_TEXTURED if textured else GROUND_MATERIAL_PLAIN
+    scene_xml = SCENE_TEXTURED if textured else ''
+
     walls_xml = []
     n = len(wall_pts)
     for i in range(n):
@@ -117,12 +160,13 @@ def generate(polygon_name: str, scale: float, clearance: float,
         if math.hypot(x2 - x1, y2 - y1) < 1e-6:
             continue
         walls_xml.append(_wall_model_sdf(f'wall_{i}', x1, y1, x2, y2,
-                                         wall_height, wall_thickness))
+                                         wall_height, wall_thickness,
+                                         wall_material))
 
     sdf = f"""<?xml version='1.0'?>
 <sdf version='1.9'>
   <world name='{polygon_name}_world'>
-    <physics name='default_physics' type='ode'>
+{scene_xml}    <physics name='default_physics' type='ode'>
       <max_step_size>0.001</max_step_size>
       <real_time_factor>{real_time_factor}</real_time_factor>
     </physics>
@@ -153,7 +197,7 @@ def generate(polygon_name: str, scale: float, clearance: float,
         </collision>
         <visual name='visual'>
           <geometry><plane><normal>0 0 1</normal><size>{(maxx - minx) + 10:.2f} {(maxy - miny) + 10:.2f}</size></plane></geometry>
-          <material><ambient>0.5 0.5 0.5 1</ambient></material>
+          {ground_material}
         </visual>
       </link>
     </model>
@@ -229,6 +273,9 @@ def main():
     parser.add_argument('--real-time-factor', type=float, default=1.0,
                         help='Gazebo real_time_factor; 0 = unthrottled, run '
                              'as fast as the CPU allows (default: 1.0)')
+    parser.add_argument('--plain', action='store_true',
+                        help='flat-grey materials and no sky instead of the '
+                             'PBR textures in worlds/textures/')
     parser.add_argument('--wall-offset', type=float, default=0.0,
                         help='Push physical walls outward by this many metres '
                              'so roadmap paths that hug reflex corners keep '
@@ -238,7 +285,7 @@ def main():
     generate(args.polygon, args.scale, args.clearance, args.wall_height,
              args.wall_thickness, args.out,
              real_time_factor=args.real_time_factor,
-             wall_offset=args.wall_offset)
+             wall_offset=args.wall_offset, textured=not args.plain)
 
 
 if __name__ == '__main__':

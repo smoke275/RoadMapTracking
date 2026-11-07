@@ -13,11 +13,12 @@ cd "$(dirname "$0")/../.."     # repo root
 STRATEGIES=${STRATEGIES:-"alpha-guard naive-dijkstra geo-follow"}
 SEEDS=${SEEDS:-"1 2 3 4 5"}
 DURATION=${DURATION:-180}      # sim seconds per trial
+EVADER_TYPE=${EVADER_TYPE:-pioneer}   # pioneer | spot (walking Spot, slower)
 OUTDIR=ros2_sim/logs/trials
 mkdir -p "$OUTDIR"
 STAMP=$(date +%Y%m%d_%H%M%S)
 STATUS=$OUTDIR/${STAMP}_status.txt
-echo "strategies: $STRATEGIES  seeds: $SEEDS  duration: ${DURATION}s" | tee "$STATUS"
+echo "strategies: $STRATEGIES  seeds: $SEEDS  duration: ${DURATION}s  evader: $EVADER_TYPE" | tee "$STATUS"
 
 for strat in $STRATEGIES; do
   for seed in $SEEDS; do
@@ -29,6 +30,7 @@ for strat in $STRATEGIES; do
         source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash &&
         timeout 850 ros2 launch ros2_sim sim.launch.py headless:=true rviz:=false \
           world:=poly9_world_fast strategy:=$strat evader_seed:=$seed \
+          evader_type:=$EVADER_TYPE \
           run_duration:=$DURATION log_csv:=/app/$csv" \
       > "$OUTDIR/${STAMP}_${strat}_seed${seed}.log" 2>&1
     rows=$(wc -l < "$csv" 2>/dev/null || echo 0)

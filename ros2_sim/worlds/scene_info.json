@@ -1,18 +1,18 @@
 {
-  "wall_offset_m": 0.45,
+  "wall_offset_m": 0.75,
   "polygon": "poly9",
   "scale_m_per_unit": 0.05,
   "wall_height_m": 3.0,
   "wall_thickness_m": 0.1,
   "room_bounds_m": {
-    "minx": -23.114717974274395,
-    "miny": -19.328097733872973,
-    "maxx": 23.125902642920895,
-    "maxy": 21.57535661310308
+    "minx": -23.524529957123992,
+    "miny": -19.642162889788292,
+    "maxx": 23.495504404868157,
+    "maxy": 21.911261021838463
   },
   "room_size_m": {
-    "width": 46.24062061719529,
-    "height": 40.90345434697605
+    "width": 47.020034361992145,
+    "height": 41.55342391162675
   },
   "clearance_requested_m": 0.5,
   "narrowest_passage_m": 1.6045207781614736,

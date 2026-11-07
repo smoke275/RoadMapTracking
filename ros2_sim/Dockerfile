@@ -32,12 +32,19 @@ RUN mkdir -p /ros2_ws/src
 
 COPY . /ros2_ws/src/ros2_sim
 
+# colcon does not descend into a package dir, so the vendored Spot/CHAMP
+# packages (spot_stack/, used by evader_type:=spot) must live beside
+# ros2_sim, not inside it. Same arrangement as CodeICRA25/icra25_ros2.
+RUN mv /ros2_ws/src/ros2_sim/spot_stack /ros2_ws/src/spot_stack
+
 SHELL ["/bin/bash", "-c"]
 # NOT --symlink-install: for ament_python packages that breaks `ros2
 # launch`'s Node action, which expects console_scripts under
 # install/<pkg>/lib/<pkg>/ — --symlink-install (a pip -e install under the
 # hood) puts them in install/<pkg>/bin/ instead. Confirmed by actually
 # running the launch file and hitting exactly this failure.
+# Builds champ, champ_msgs, champ_base (C++), champ_config, spot_description
+# and ros2_sim; all of CHAMP's ROS dependencies are already in desktop-full.
 RUN source /opt/ros/humble/setup.bash && \
     colcon build
 

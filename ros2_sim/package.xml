@@ -19,6 +19,12 @@
   <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_interfaces</exec_depend>
+  <!-- evader_type:=spot: CHAMP quadruped controller + Spot model, vendored
+       in spot_stack/ (moved beside this package in the Docker workspace) -->
+  <exec_depend>champ_base</exec_depend>
+  <exec_depend>champ_config</exec_depend>
+  <exec_depend>spot_description</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>

@@ -1,0 +1,19 @@
+{
+ "window": [
+  1870,
+  1011
+ ],
+ "strategy": "geo-follow",
+ "events": [
+  {
+   "t": 0.0,
+   "shot": "overview",
+   "ok": true
+  },
+  {
+   "t": 4.04,
+   "shot": "drone",
+   "ok": true
+  }
+ ]
+}

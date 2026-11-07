@@ -56,6 +56,33 @@ exactly what was tested and how.
   of this model used `DiffDrive` with real wheel-torque dynamics; reverted
   once the evader's own physical accuracy turned out not to matter for
   anything being measured.)
+- `spot_stack/` + `models/spot_evader/` — the **alternative evader**
+  (`evader_type:=spot`): a Boston Dynamics Spot with walking legs. The
+  stack (CHAMP quadruped controller `champ`/`champ_base`/`champ_msgs`,
+  Spot gait/joint/link parameters `champ_config`, and the `spot_description`
+  meshes + SDF/URDF) is vendored unmodified from
+  `CodeICRA25/icra25_ros2/spot_stack` (see `spot_stack/PROVENANCE.md` for
+  the full chain back to gazebo-isr-simulator). The Gazebo-side model is
+  generated from it by `scripts/adapt_spot_model.py`: model renamed
+  `spot_evader`, plugin topics moved to `/model/spot_evader/*`, odom frame
+  set to `world` like the other models, all 17 sensors stripped, collision
+  bitmask added. At run time the evader node's body-frame Twist on
+  `/evader/cmd_vel` goes to CHAMP's `quadruped_controller_node`, which
+  turns it into 12-joint leg trajectories that Gazebo's built-in
+  `JointTrajectoryController` executes — a real walking gait, not a slide.
+  The evader nodes are unchanged; the launch file only swaps the spawn, the
+  bridge entries and adds the CHAMP node. Spot defaults to 0.6 m/s and
+  1.0 rad/s (CHAMP's gait caps at 1.5 m/s / 1.0 rad/s; override with
+  `evader_speed:=`). No contact sensor, so `evader_wanderer.py`'s wall-bump
+  reversal is inactive with Spot (the skeleton evader never needs it).
+- `worlds/textures/` — PBR texture sets (albedo + normal + roughness) for
+  the walls (`wall_27_*.jpg`) and ground (`ground*.jpg`), copied from
+  `CodeICRA25/icra25_ros2/worlds/textures`. `generate_world.py` now emits
+  them on every wall and the ground plane plus a sky/ambient `<scene>`
+  block; `--plain` restores the old flat-grey materials. Both world files
+  were regenerated with the same geometry arguments as before — `diff`
+  against the previous files shows only material/scene lines changed and
+  `scene_info.json` is byte-identical.
 - `models/simple_drone/`, `models/simple_ground_robot/` — the original
   hand-built box/cylinder placeholders, kept as a lightweight fallback
   (no longer spawned by default — see `launch/sim.launch.py`).
@@ -124,15 +151,33 @@ than the Python simulation's image.
 cd ros2_sim
 docker build -t ros2_sim .
 xhost +local:docker
-docker run --rm -it \
+cd ..   # repo root: the planner node imports the Python pipeline from /app
+docker run --rm -it --net=host \
   -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-  --net=host \
-  ros2_sim
+  -e QT_X11_NO_MITSHM=1 -e ROS_DOMAIN_ID=42 \
+  --gpus all -e NVIDIA_DRIVER_CAPABILITIES=all --device /dev/dri \
+  -v "$PWD":/app ros2_sim
 # inside the container:
 source /opt/ros/humble/setup.bash
 source /ros2_ws/install/setup.bash
-ros2 launch ros2_sim sim.launch.py
+ros2 launch ros2_sim sim.launch.py strategy:=alpha-guard evader_seed:=42
+# walking Spot instead of the Pioneer:
+ros2 launch ros2_sim sim.launch.py evader_type:=spot
 ```
+
+The image build now also compiles the vendored CHAMP packages (C++), so
+the first `docker build` takes a few minutes longer than before. The
+Dockerfile moves `spot_stack/` beside `ros2_sim/` in the colcon workspace
+because colcon does not descend into a package directory.
+
+`--device /dev/dri` is required on an NVIDIA host running GNOME on Wayland
+(verified 2026-11-01 on the RTX 5070 Ti box): without it both RViz2 and the
+Gazebo GUI create a working NVIDIA GL context, show up in `nvidia-smi`, log
+zero errors, and still present a **black 3D pane**, because the driver
+hands finished frames to XWayland through the DRM render node and the
+container cannot open it. `--gpus all` alone does not expose `/dev/dri`.
+Also note GNOME's focus-stealing prevention keeps the new windows behind
+whatever you had focused; Alt+Tab or the Activities overview finds them.
 
 Headless sanity-check (no GUI, confirms the whole stack is wired up):
 ```bash
@@ -151,6 +196,15 @@ docker run --rm -v "$(pwd)":/app -w /app roadmaptracking \
   python ros2_sim/scripts/generate_world.py poly2 --scale 0.04 \
   --out ros2_sim/worlds/poly2_world.sdf
 ```
+
+The shipped `poly9_world.sdf` / `poly9_world_fast.sdf` were generated with
+`poly9 --scale 0.05 --clearance 0.5 --wall-height 3.0 --wall-thickness 0.1
+--wall-offset 0.75` (plus `--real-time-factor 4.0` for the fast one); use
+the same arguments to regenerate them without moving anything. The wall
+offset was 0.45 m until 2026-11-01; it was raised to 0.75 m to give the
+walking Spot more buffer (see "Verification status"). It only moves the
+physical walls outward — the polygon the planner and the skeleton evader
+use, the spawn points and `polygon_vertices_m` are unchanged.
 
 The script always prints (and saves to `scene_info.json`) the narrowest
 passage width and whether the requested clearance actually fits — check
@@ -271,6 +325,32 @@ image and ran the real simulator:
   longer run, a harder-to-track evader, or degraded tracking (e.g. control
   lag, a dropped command) could still produce one, since the geometry
   underneath is clearly capable of it.
+- **Spot evader + textured world, verified 2026-11-01** after porting
+  both from `CodeICRA25/icra25_ros2`: the rebuilt image compiles all six
+  packages (CHAMP C++ included, 17 s on top of the base). A 45 s headless
+  run with `evader_type:=spot` (alpha-guard, seed 42, poly9 at real time)
+  started every node cleanly — CHAMP parsed the URDF, both Spot bridge
+  entries (`/model/spot_evader/odometry`, `/model/spot_evader/
+  joint_trajectory`) were created — and the walking Spot covered 21.1 m of
+  path (16.9 m net displacement) at the 0.6 m/s default, with the drone
+  lagging its virtual pursuer by 0.82 m on average and holding line of
+  sight for 93% of samples. A later 400 s GUI run (same seed) put Spot's
+  body centre no closer than 0.91 m to any wall face (5th percentile
+  1.46 m), i.e. at least 0.36 m of body clearance at the worst moment given
+  its 0.55 m half-length — the then 0.45 m `--wall-offset` plus the
+  skeleton path's own clearance absorbed the walking gait's corner-cutting
+  at this scale. For extra buffer the offset was then raised to 0.75 m
+  (room 47.0 m × 41.6 m, planner geometry untouched). Re-measured on the
+  rebuilt image with a 240 sim-second headless Spot run on
+  `poly9_world_fast` (seed 42, 104 m of path): body centre never closer
+  than 1.41 m to a wall face (5th percentile 2.43 m, median 4.08 m), i.e.
+  0.86 m of worst-case body clearance, up from 0.36 m; median walking speed
+  0.44 m/s, longest standstill 1.1 s. Line of sight is computed in the
+  planner's polygon, so the offset does not affect it. A 25 s Pioneer run on the
+  regenerated textured world was unchanged. The only log noise is at
+  shutdown (the evader node's `rcl_shutdown already called` traceback and,
+  with Spot, a `parameter_bridge` segfault on SIGINT), after the run has
+  completed and the CSV is closed.
 - **Not verified** (no display in this environment): RViz2 actually
   rendering pixels on screen — the frame-mismatch bug above is fixed and
   every topic it depends on is confirmed publishing correctly, but nothing

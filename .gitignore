@@ -12,3 +12,10 @@ resources/corner_groups.pkl
 # Previous papers kept locally for style reference
 Relay_Pursuit_for_Multirobot_Target_Tracking_on_Tile_Graphs.pdf
 Scalable_Multi-Agent_Surveillance_a_Kernel-Based_Approach.pdf
+video/out/frames/
+video/out/*.mp4
+!video/out/RoadmapTracking_video.mp4
+video/out/*.png
+video/out/*.txt
+video/out/*.json
+video/out/*.log

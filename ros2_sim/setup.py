@@ -29,7 +29,14 @@ setup(
          [os.path.join('resource', package_name)]),
         (os.path.join('share', package_name), ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'worlds'), glob('worlds/*')),
+        # glob('worlds/*') would also pick up the worlds/textures directory
+        # itself, which setuptools refuses to copy as a data file.
+        (os.path.join('share', package_name, 'worlds'),
+         [f for f in glob('worlds/*') if os.path.isfile(f)]),
+        # PBR textures referenced by relative path from the world files
+        # (textures/wall_27.jpg etc., see scripts/generate_world.py)
+        (os.path.join('share', package_name, 'worlds', 'textures'),
+         glob('worlds/textures/*')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         *model_data_files(),
     ],

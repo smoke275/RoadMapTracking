@@ -1,0 +1,34 @@
+{
+ "window": [
+  1870,
+  1011
+ ],
+ "strategy": "alpha-guard",
+ "events": [
+  {
+   "t": 0.0,
+   "shot": "overview",
+   "ok": true
+  },
+  {
+   "t": 10.07,
+   "shot": "drone",
+   "ok": true
+  },
+  {
+   "t": 24.08,
+   "shot": "spot",
+   "ok": true
+  },
+  {
+   "t": 36.09,
+   "shot": "drone_wide",
+   "ok": true
+  },
+  {
+   "t": 52.1,
+   "shot": "overview",
+   "ok": true
+  }
+ ]
+}
