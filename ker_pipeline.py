@@ -255,14 +255,22 @@ def compute_corner_asso(poly, corners, env) -> dict:
 # ---------------------------------------------------------------------------
 # One-time pipeline build
 # ---------------------------------------------------------------------------
-def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
+def build(poly, renderer=None, force_recompute: bool = False,
+          roadmap: str = None) -> SimulationData:
     """
     Run the full KER pipeline and return a SimulationData object.
 
     renderer  — a Window instance (or any object with _d_polygon/_d_dot/etc.
                 convenience methods and execute()).  Pass None to skip all
                 intermediate display (useful for headless testing).
+    roadmap   — 'ker' (geodesics between the selected guards) or 'watchman'
+                (the shortest watchman route as the patrol graph); defaults
+                to config.ROADMAP_MODE.
     """
+    import config as _config
+    roadmap = roadmap or _config.ROADMAP_MODE
+    if roadmap not in ('ker', 'watchman'):
+        raise ValueError(f'unknown roadmap mode {roadmap!r}')
     def _render(*args, **kwargs):
         """Call renderer method if renderer is available."""
         pass  # replaced below
@@ -286,6 +294,8 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
 
     # ---- Try cache -------------------------------------------------------
     fingerprint        = poly_fingerprint(poly)
+    if roadmap != 'ker':
+        fingerprint += f':{roadmap}'      # 'ker' keeps the historical key
     _cached, _cached_geo = (None, None) if force_recompute else load_cache(fingerprint)
 
     if _cached is not None:
@@ -302,9 +312,13 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
         geodesic            = Geodesic(poly)
         geodesic.graph      = _cached_geo
         scipy_g             = csgraph_from_dense(dense, null_value=-1)
-        guards              = [tuple(_cached['KER_coords'][i])
-                               for i in _cached['chosed_set']]
-        coverage_pct        = _coverage_pct(guards, shapely_env, env)
+        if 'guards' in _cached:            # newer caches store them directly
+            guards       = [tuple(g) for g in _cached['guards']]
+            coverage_pct = float(_cached['coverage_pct'])
+        else:
+            guards       = [tuple(_cached['KER_coords'][i])
+                            for i in _cached['chosed_set']]
+            coverage_pct = _coverage_pct(guards, shapely_env, env)
         palette             = sns.color_palette('husl', len(corners))
 
         if renderer:
@@ -616,22 +630,43 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
 
         # ---- Patrol path ------------------------------------------------
         path_lines = []
-        for it in range(len(chosed_set)):
-            for jt in range(it + 1, len(chosed_set)):
-                ia, ib = chosed_set[it], chosed_set[jt]
-                pa = [KER[ia].x(), KER[ia].y()]
-                pb = [KER[ib].x(), KER[ib].y()]
-                try:
-                    sp = geodesic.shortest_path(pa, pb)
-                except KeyError:
-                    with suppress_output():
-                        raw = env.shortest_path(KER[ia], KER[ib], EPSILON)
-                    sp = [vg.Point(p.x(), p.y()) for p in raw.path()]
-                for kt in range(len(sp) - 1):
+        guards = [(KER[i].x(), KER[i].y()) for i in chosed_set]
+        if roadmap == 'watchman':
+            # The shortest watchman route as the patrol graph: one closed
+            # cycle. Its touch points on the essential cuts lie on the
+            # boundary of the corresponding association regions, so every
+            # A(c) meets the roadmap (checked below after the entry nodes
+            # are computed). The touch points stand in for the guards for
+            # the baselines that need anchor points (TSP-Patrol, kernel).
+            from watchman_route import get_watchman_route, coverage_fraction
+            wr = get_watchman_route(poly)
+            for (ax, ay), (bx, by) in zip(wr.route[:-1], wr.route[1:]):
+                if math.hypot(bx - ax, by - ay) > _EDGE_LEN_EPS:
                     add_unique_linestring(
-                        path_lines,
-                        LineString([Point(sp[kt].x, sp[kt].y),
-                                    Point(sp[kt + 1].x, sp[kt + 1].y)]))
+                        path_lines, LineString([Point(ax, ay), Point(bx, by)]))
+            guards = [tuple(p) for p in wr.touch]
+            coverage_pct = 100.0 * coverage_fraction(
+                [(p.x(), p.y()) for p in poly], wr.route)
+            print(f'[ROADMAP] watchman route: {len(wr.cuts)} essential cuts, '
+                  f'length {wr.length:.1f}, {len(path_lines)} segments, '
+                  f'{coverage_pct:.2f}% of area seen along it')
+        else:
+            for it in range(len(chosed_set)):
+                for jt in range(it + 1, len(chosed_set)):
+                    ia, ib = chosed_set[it], chosed_set[jt]
+                    pa = [KER[ia].x(), KER[ia].y()]
+                    pb = [KER[ib].x(), KER[ib].y()]
+                    try:
+                        sp = geodesic.shortest_path(pa, pb)
+                    except KeyError:
+                        with suppress_output():
+                            raw = env.shortest_path(KER[ia], KER[ib], EPSILON)
+                        sp = [vg.Point(p.x(), p.y()) for p in raw.path()]
+                    for kt in range(len(sp) - 1):
+                        add_unique_linestring(
+                            path_lines,
+                            LineString([Point(sp[kt].x, sp[kt].y),
+                                        Point(sp[kt + 1].x, sp[kt + 1].y)]))
 
         # ---- Corner intersection points with patrol path ----------------
         intersection_points = {}
@@ -697,7 +732,15 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
 
         rows, cols_sp, _ = sp_find(scipy_g)
         total_edges      = list(zip(cols_sp, rows))
-        guards           = [(KER[i].x(), KER[i].y()) for i in chosed_set]
+
+        _unreached = [c for c in corners
+                      if not any(math.isfinite(v[c]) for v in vectors_org)]
+        if _unreached:
+            print(f'[WARNING] Roadmap ({roadmap}) reaches no entry node of '
+                  f'A(c) for corners {_unreached}; their alpha is infinite.')
+        else:
+            print(f'[OK] Roadmap ({roadmap}) meets every association region '
+                  f'({len(vertices)} vertices, {len(path_lines)} segments).')
 
         save_cache(fingerprint, {
             'corners':             list(corners),
@@ -715,6 +758,9 @@ def build(poly, renderer=None, force_recompute: bool = False) -> SimulationData:
             'bi_map':              bi_map,
             'vertices':            list(vertices),
             'graph':               dict(graph),
+            'guards':              list(guards),
+            'coverage_pct':        float(coverage_pct),
+            'roadmap':             roadmap,
         }, geodesic)
 
     # ---- Build Voronoi skeleton -----------------------------------------

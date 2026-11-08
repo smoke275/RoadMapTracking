@@ -9,7 +9,7 @@ import math
 from shapely.geometry import Point
 from shapely.prepared import prep
 
-from geometry import interpolate_point
+from geometry import interpolate_point, suppress_output
 from graph import dijkstra
 from ker_pipeline import (_build_vis_shape, compute_optimal_guard,
                           compute_path_lengths, _opt_offset)
@@ -258,6 +258,62 @@ class TSPPatrolPursuer:
         return self.ctrl.pos
 
 
+class WatchmanPatrolPursuer:
+    """Uninformed baseline, off-roadmap: cyclically walk the shortest
+    watchman route of the polygon (watchman_route.py), the shortest closed
+    curve from which every point of the polygon is seen.  Like TSP-Patrol it
+    ignores the evader; unlike it, the route is not tied to the guard set or
+    the patrol roadmap.  Started away from the route (the GUI switches
+    strategies mid-run) it first walks the geodesic to the nearest route
+    point, then follows the route.
+    """
+
+    name = 'watchman-patrol'
+
+    def __init__(self, data, evader_start, speed):
+        from watchman_route import get_watchman_route
+        self.data = data
+        self.speed = speed
+        self.route = get_watchman_route(data.poly)
+        self._s = 0.0                  # arc length along the route
+        self._approach: list = []      # geodesic waypoints to reach the route
+        if self.route.touch:
+            # spawn at the route point nearest the evader (comparable to the
+            # other baselines, which spawn at their own first target)
+            self._s, p = self.route.nearest(evader_start)
+            self.pos = [p[0], p[1]]
+        else:
+            self.pos = list(evader_start)
+
+    def start_from(self, pos):
+        """Place the pursuer at `pos` and plan the geodesic to the route."""
+        self.pos = [float(pos[0]), float(pos[1])]
+        self._s, p = self.route.nearest(self.pos)
+        with suppress_output():
+            sp = self.data.geodesic.shortest_path(tuple(self.pos), p)
+        self._approach = [(q.x, q.y) for q in sp[1:]] or [p]
+
+    def step(self, evader_pos=None, path_lengths=None):
+        rem = self.speed
+        px, py = self.pos
+        while rem > 0 and self._approach:
+            wx, wy = self._approach[0]
+            d = math.hypot(wx - px, wy - py)
+            if d <= rem:
+                px, py = wx, wy
+                rem -= d
+                self._approach.pop(0)
+            else:
+                px += (wx - px) / d * rem
+                py += (wy - py) / d * rem
+                rem = 0
+        if rem > 0 and self.route.length > 0:
+            self._s = (self._s + rem) % self.route.length
+            px, py = self.route.point_at(self._s)
+        self.pos = [px, py]
+        return px, py
+
+
 PURSUER_CLASSES = {
     'minmax-alpha': MinMaxAlphaPursuer,
     'minmax-alpha-vis': MinMaxAlphaVisPursuer,
@@ -265,4 +321,5 @@ PURSUER_CLASSES = {
     'geo-follow': GeoFollowPursuer,
     'greedy-los': GreedyLOSPursuer,
     'tsp-patrol': TSPPatrolPursuer,
+    'watchman-patrol': WatchmanPatrolPursuer,
 }

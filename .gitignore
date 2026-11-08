@@ -8,6 +8,7 @@ resources/ker_cache.pkl
 resources/ker_geodesic.graph
 resources/output.txt
 resources/corner_groups.pkl
+resources/watchman_cache.pkl
 
 # Previous papers kept locally for style reference
 Relay_Pursuit_for_Multirobot_Target_Tracking_on_Tile_Graphs.pdf

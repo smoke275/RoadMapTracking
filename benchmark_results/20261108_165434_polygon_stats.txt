@@ -1,0 +1,13 @@
+Polygon   n   r   m  |J|  |E|  L_ker    L_w L_w/√A D_geo/√A D_link V_mean w_min/√A  s*ker   s*wm  class
+-------------------------------------------------------------------------------------------------------
+poly1    48  22  12    9  540   6866   2644   5.61     2.42      5  0.253    0.124  1.907  3.423  general
+poly2    47  23  15    9  554   5408   1936   5.18     2.27      6  0.415    0.453  1.677  3.428  general
+poly3    23  10   6    5   94   2248   2032   4.07     2.43      5  0.340    0.108  1.833  1.790  general
+poly4    47  20  12    5  204   1781   1552   4.28     1.99      5  0.437    0.464  2.713  6.108  general
+poly5    38  17  11    8  416   8018   2958   5.01     1.81      5  0.290    0.092  1.945  4.324  general
+poly6    39  17  10    7  364   7868   3108   4.97     2.05      5  0.231    0.111  2.168  4.207  general
+poly7    30  12   6    7  284   7490   3695   6.14     2.08      4  0.291    0.109  1.418  5.819  general
+poly8    60  29  14   13  698   5123   2426   6.81     2.38      9  0.150    0.044  1.738  5.910  general
+poly9    39  17   9    7  262   3816   2694   4.73     1.87      5  0.319    0.056  1.682  5.668  general
+
+n vertices, r reflex vertices, m essential cuts; |J| guards, |E| patrol-graph edges and L_ker roadmap length of the KER roadmap; L_w shortest watchman route; D_geo geodesic diameter; D_link link diameter (vertex+grid estimate); V_mean mean visibility fraction over the interior grid; w_min narrowest passage; s* critical speed ratio on the KER roadmap and on the watchman cycle. Grid 25x25. Lengths normalised by sqrt(area).

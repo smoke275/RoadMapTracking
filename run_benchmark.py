@@ -49,25 +49,34 @@ def main():
                              'matters a lot once --seeds is in the hundreds.')
     parser.add_argument('--sequential', action='store_true',
                         help='Disable multiprocessing (debugging only)')
+    parser.add_argument('--roadmap', choices=['ker', 'watchman'], default=None,
+                        help='Patrol roadmap source (default: config.ROADMAP_MODE). '
+                             "With 'watchman' the environment is labelled "
+                             "'polyN@watchman' in the tables.")
     args = parser.parse_args()
+    import config
+    if args.roadmap:
+        config.ROADMAP_MODE = args.roadmap
+    mode = config.ROADMAP_MODE
 
     n_workers = args.workers or multiprocessing.cpu_count()
 
     results = []
     for polygon in args.polygons:
-        print(f'=== {polygon} ({n_workers} workers) ===', flush=True)
+        print(f'=== {polygon} ({n_workers} workers, roadmap={mode}) ===', flush=True)
         data = ker_pipeline.build(load_poly(polygon), renderer=None,
                                   force_recompute=True)
+        label = polygon if mode == 'ker' else f'{polygon}@{mode}'
         for evader_model in args.evaders:
             for strategy in args.strategies:
                 if args.sequential:
                     results.append(run_config(
-                        polygon, strategy=strategy, evader_model=evader_model,
+                        label, strategy=strategy, evader_model=evader_model,
                         n_seeds=args.seeds, frames=args.frames,
                         s_p=args.sp, s_e=args.se, data=data))
                 else:
                     results.append(run_config_parallel(
-                        polygon, strategy=strategy, evader_model=evader_model,
+                        label, strategy=strategy, evader_model=evader_model,
                         n_seeds=args.seeds, frames=args.frames,
                         s_p=args.sp, s_e=args.se, data=data,
                         n_workers=n_workers))

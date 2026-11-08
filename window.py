@@ -156,6 +156,12 @@ class Window(QMainWindow):
         self._dbg_dir_flips: int      = 0
         self._dbg_prev_move_vec       = None
 
+        # Shortest watchman route (W key overlay; also the 'watchman-patrol'
+        # strategy's track). Computed once per polygon on its own thread.
+        self._show_watchman: bool = False
+        self._watchman            = None   # watchman_route.WatchmanRoute
+        self._watchman_thread     = None
+
         # Worst-case (spatial max-alpha sweep) state
         self._compute_pool       = None   # set by run(); shared with per-frame KER computation
 
@@ -494,11 +500,19 @@ class Window(QMainWindow):
             self._show_prm = not self._show_prm
             print(f'[PRM-GRAPH] {"ON" if self._show_prm else "OFF"}')
         elif e.key() == Qt.Key_S:
-            _cycle = ['minmax-alpha', 'geo-follow', 'tsp-patrol', 'kernel-control']
+            _cycle = ['minmax-alpha', 'geo-follow', 'tsp-patrol', 'kernel-control',
+                      'watchman-patrol']
             _i = _cycle.index(self._pursuer_strategy)
             self._pursuer_strategy = _cycle[(_i + 1) % len(_cycle)]
             self._strategy_obj = None   # rebuilt lazily for the new strategy
             print(f'[STRATEGY] {self._pursuer_strategy}')
+            if self._pursuer_strategy == 'watchman-patrol':
+                self._ensure_watchman()
+        elif e.key() == Qt.Key_W:
+            self._show_watchman = not self._show_watchman
+            print(f'[WATCHMAN-ROUTE] {"ON" if self._show_watchman else "OFF"}')
+            if self._show_watchman:
+                self._ensure_watchman()
         elif e.key() == Qt.Key_L:
             self._show_los = not self._show_los
             print(f'[LOS-FORECAST] {"ON" if self._show_los else "OFF"}')
@@ -524,6 +538,40 @@ class Window(QMainWindow):
                     self._prm_seg_pos        = 0.0
                     self._prm_last_guard     = None
         super().keyPressEvent(e)
+
+    def _ensure_watchman(self):
+        """Start computing the shortest watchman route once, off the render
+        and KER-compute threads; self._watchman is set when it is ready."""
+        if self._watchman is not None or self._data is None:
+            return
+        if self._watchman_thread is not None and self._watchman_thread.is_alive():
+            return
+
+        def _work():
+            from watchman_route import get_watchman_route
+            t0 = time.perf_counter()
+            wr = get_watchman_route(self._data.poly)
+            print(f'[WATCHMAN-ROUTE] {len(wr.cuts)} essential cuts, length '
+                  f'{wr.length:.1f} ({time.perf_counter() - t0:.1f} s)')
+            self._watchman = wr
+
+        self._watchman_thread = threading.Thread(target=_work, daemon=True,
+                                                 name='watchman_route')
+        self._watchman_thread.start()
+
+    def _draw_watchman(self):
+        """Essential cuts, the closed route, and its touch points."""
+        wr = self._watchman
+        if wr is None:
+            return
+        C_CUT   = QColor(255, 170, 40, 170)
+        C_ROUTE = QColor(0, 230, 200, 230)
+        for c in wr.cuts:
+            self.draw([Op.dotted_line, c.p0[0], c.p0[1], c.p1[0], c.p1[1], 1, C_CUT])
+        for (x0, y0), (x1, y1) in zip(wr.route[:-1], wr.route[1:]):
+            self._d_glow_line(x0, y0, x1, y1, C_ROUTE, width=3)
+        for (tx, ty) in wr.touch:
+            self._d_ring(tx, ty, 6, C_ROUTE, width=2)
 
     def _map_mouse(self, event):
         W, H = self.width(), self.height()
@@ -622,6 +670,8 @@ class Window(QMainWindow):
         # ---- Build KER pipeline (one-time) ---------------------------
         data = ker_pipeline.build(poly, renderer=self, force_recompute=force_recompute)
         self._data = data   # expose to keyPressEvent
+        if self._show_watchman:          # main.py --watchman
+            self._ensure_watchman()
 
         # ---- Expose to interactive handlers --------------------------
         evader_pt = Point(0, 0)
@@ -707,6 +757,11 @@ class Window(QMainWindow):
                             self._d_line(x0, y0, x1, y1, C_PRM_EDGE, width=1)
                 for (nx, ny) in self._prm_nodes:
                     self._d_dot(nx, ny, 2, C_PRM_NODE)
+
+            # ---- Shortest watchman route (toggle with [W]) -------------
+            if self._show_watchman or (self.auto_evader and self._roadmap_pursuer and
+                                       self._pursuer_strategy == 'watchman-patrol'):
+                self._draw_watchman()
 
             # ---- Intersection points for active corner -----------------
             for pt in list(data.intersection_points[act]):
@@ -957,6 +1012,29 @@ class Window(QMainWindow):
                             gcx, gcy = data.poly[ci].x(), data.poly[ci].y()
                             self._d_ring(gcx, gcy, 10, QColor(255, 120, 255, 200),
                                         width=2)
+                    elif self._pursuer_strategy == 'watchman-patrol':
+                        # Free-motion patrol of the shortest watchman route;
+                        # waits until the route is computed, then walks the
+                        # geodesic from the current position onto it.
+                        if self._watchman is not None:
+                            if self._strategy_obj is None or \
+                                    self._strategy_obj.name != self._pursuer_strategy:
+                                from benchmark.pursuers import WatchmanPatrolPursuer
+                                self._strategy_obj = WatchmanPatrolPursuer(
+                                    data, tuple(self._roadmap_obs_pos),
+                                    self._pursuer_speed)
+                                self._strategy_obj.start_from(self._roadmap_obs_pos)
+                            self._strategy_obj.speed = self._pursuer_speed * dt
+                            px_, py_ = self._strategy_obj.step()
+                            self._roadmap_obs_pos = [px_, py_]
+                            self.draggable_point_observer = QPoint(int(px_), int(py_))
+                            for (ax, ay), (bx, by) in zip(
+                                    [(px_, py_)] + self._strategy_obj._approach[:-1],
+                                    self._strategy_obj._approach):
+                                self._d_glow_line(ax, ay, bx, by,
+                                                  QColor(0, 230, 200, 140), width=1)
+                        else:
+                            self._d_text(-490, 430, 'computing watchman route…', size=11)
                     else:
                         if self._strategy_obj is None or \
                                 self._strategy_obj.name != self._pursuer_strategy:
@@ -1059,6 +1137,13 @@ class Window(QMainWindow):
             self._d_text(-490, -370, f'[V] vis-gating: {gating_label}', size=11)
             los_label = 'ON' if self._show_los else 'OFF'
             self._d_text(-490, -350, f'[L] LOS forecast: {los_label}', size=11)
+            if self._show_watchman:
+                wm_label = (f'ON  L={self._watchman.length:.0f}, '
+                            f'{len(self._watchman.cuts)} essential cuts'
+                            if self._watchman is not None else 'computing…')
+            else:
+                wm_label = 'OFF'
+            self._d_text(-490, -330, f'[W] watchman route: {wm_label}', size=11)
 
             self.execute()
             time.sleep(0.016)   # cap sim-thread at ~60 fps; frees CPU for compute worker

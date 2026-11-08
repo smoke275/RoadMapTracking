@@ -44,7 +44,13 @@ def main():
                              '(default: every resources/sites_poly*.csv)')
     parser.add_argument('--grid', type=int, default=25,
                         help='Grid resolution per axis (default: 25)')
+    parser.add_argument('--roadmap', choices=['ker', 'watchman'], default=None,
+                        help='Patrol roadmap source (default: config.ROADMAP_MODE)')
     args = parser.parse_args()
+    import config
+    if args.roadmap:
+        config.ROADMAP_MODE = args.roadmap
+    mode = config.ROADMAP_MODE
 
     polygons = args.polygons or _discover_polygons()
     if not polygons:
@@ -63,13 +69,17 @@ def main():
         x, y, alpha, n_pts = result
         rows.append((name, len(data.poly), len(data.corners), len(data.guards),
                      n_pts, alpha, x, y, elapsed))
+        print(f'  roadmap={mode}: {len(data.vertices)} vertices, '
+              f'{len(data.path_lines)} segments, total length '
+              f'{sum(l.length for l in data.path_lines):.0f}, '
+              f'coverage {data.coverage_pct:.2f}%', flush=True)
         print(f'  min s_p/s_e = {alpha:.3f} at ({x:.1f}, {y:.1f})  '
               f'[{n_pts} pts, {elapsed:.0f}s]', flush=True)
 
     header = (f'{"Polygon":<8} {"Verts":>5} {"Corners":>7} {"Guards":>6} '
               f'{"Grid pts":>8} {"min s_p/s_e":>11} {"worst evader (x, y)":>22} '
               f'{"paper 0.8 ok?":>13}')
-    lines = [header, '-' * len(header)]
+    lines = [f'# roadmap={mode} grid={args.grid}', header, '-' * len(header)]
     for name, nv, nc, ng, n_pts, alpha, x, y, _ in rows:
         ok = 'yes' if PAPER_SPEED_RATIO >= alpha else 'no'
         lines.append(f'{name:<8} {nv:>5} {nc:>7} {ng:>6} {n_pts:>8} {alpha:>11.3f} '
@@ -87,7 +97,8 @@ def main():
 
     out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'benchmark_results')
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, time.strftime('%Y%m%d_%H%M%S') + '_max_speed.txt')
+    suffix = '_max_speed.txt' if mode == 'ker' else f'_max_speed_{mode}.txt'
+    out_path = os.path.join(out_dir, time.strftime('%Y%m%d_%H%M%S') + suffix)
     with open(out_path, 'w') as f:
         f.write(table + '\n')
     print(f'\n[SAVED] {out_path}')

@@ -10,6 +10,7 @@ STRATEGY_LABELS = {
     'geo-follow': 'Geo-Follow',
     'greedy-los': 'Greedy-LOS',
     'tsp-patrol': 'TSP-Patrol',
+    'watchman-patrol': 'Watchman-Patrol',
     'kernel-control': 'Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25)',
 }
 EVADER_LABELS = {

@@ -8,9 +8,18 @@ POINT_RADIUS = 8
 WINDOW_SIZE  = 750
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-FILE_NAME   = os.path.join(_SCRIPT_DIR, 'resources', 'sites_poly7.csv')
+FILE_NAME   = os.path.join(_SCRIPT_DIR, 'resources', 'sites_poly9.csv')
 CACHE_FILE  = os.path.join(_SCRIPT_DIR, 'resources', 'ker_cache.pkl')
 GEO_FILE    = os.path.join(_SCRIPT_DIR, 'resources', 'ker_geodesic.graph')
+
+# ---- Patrol roadmap source --------------------------------------------------
+# 'ker'      : geodesics between the ILP-selected KER guards (the paper's roadmap)
+# 'watchman' : the shortest watchman route of the polygon (watchman_route.py),
+#              a single closed cycle that sees every point of the polygon.
+# Everything downstream (entry nodes, distance tables, g*, controller, s*) is
+# identical; only the embedded graph differs. run_max_speed.py and
+# run_benchmark.py take --roadmap to override this per run.
+ROADMAP_MODE = 'ker'
 
 # ---- Multi-pursuer (see corner_groups.py / multi_window.py) ----------------
 # Number of pursuers. 1 runs the original single-pursuer demo; >1 partitions

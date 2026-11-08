@@ -11,6 +11,9 @@ Controls:
   A                — toggle auto-evader (Voronoi skeleton)
   P                — toggle roadmap pursuer
   L                — toggle line-of-sight forecast (Φ score + escape path colouring)
+  S                — cycle pursuer strategy (incl. 'watchman-patrol', which walks
+                     the shortest watchman route, see watchman_route.py)
+  W                — toggle the shortest watchman route overlay
   Esc              — quit
 
 With config.NUM_PURSUERS > 1 the k-pursuer window (multi_window.py) opens
@@ -34,7 +37,17 @@ def startup():
     parser.add_argument('-s', '--skip-draw', action='store_true',
                         help='Skip the interactive polygon-drawing tool and load '
                              'the polygon straight from resources/ (config.FILE_NAME)')
+    parser.add_argument('-w', '--watchman', action='store_true',
+                        help='Start with the shortest watchman route overlay on '
+                             '(same as pressing W)')
+    parser.add_argument('--roadmap', choices=['ker', 'watchman'], default=None,
+                        help='Patrol roadmap the pursuer is confined to: the KER '
+                             'guard graph or the shortest watchman route '
+                             '(default: config.ROADMAP_MODE)')
     args, qt_args = parser.parse_known_args()
+    if args.roadmap:
+        import config
+        config.ROADMAP_MODE = args.roadmap
     if args.recompute:
         print('[INFO] --recompute flag set: ignoring cache.')
 
@@ -57,6 +70,7 @@ def startup():
         window = MultiPursuitWindow(NUM_PURSUERS)
     else:
         window = Window()
+        window._show_watchman = args.watchman
     thread = threading.Thread(
         target=window.run, args=(poly,),
         kwargs={'force_recompute': args.recompute},

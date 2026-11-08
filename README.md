@@ -116,6 +116,8 @@ Loads the polygon straight from `resources/` (`config.py`'s `FILE_NAME`) instead
 | Drag **cyan** dot | Cycle active corner |
 | `A` | Toggle autonomous evader (Voronoi skeleton navigation) |
 | `P` | Toggle roadmap pursuer |
+| `S` | Cycle pursuer strategy (`minmax-alpha`, `geo-follow`, `tsp-patrol`, `kernel-control`, `watchman-patrol`) |
+| `W` | Toggle the shortest watchman route overlay |
 | `Esc` | Quit |
 
 ---
@@ -137,6 +139,28 @@ Loads the polygon straight from `resources/` (`config.py`'s `FILE_NAME`) instead
 ## Polygon files
 
 Polygon presets are in `resources/sites_poly{1-9}.csv`. Edit `config.py` (`FILE_NAME`) to switch polygons.
+
+---
+
+## Shortest watchman route
+
+```bash
+python watchman_route.py --skip-draw --check --png watchman.png   # current polygon
+python watchman_route.py --polygon resources/sites_poly9.csv
+```
+
+`watchman_route.py` computes the shortest closed route from which the whole polygon is seen (the classical watchman route problem for simple polygons). It follows the Chin–Ntafos structure: at every reflex vertex both incident edges are extended to the boundary, each extension is a *cut* whose *pocket* is the part hidden behind the wall, and only the cuts with minimal pockets (the *essential cuts*) constrain the route. The route touches the essential cuts in boundary order and runs geodesics between the touch points; the touch points are found by a dynamic program over samples on the cuts followed by continuous coordinate descent, and geodesic distances go through the vertex visibility graph. `--check` verifies coverage with visibility polygons sampled along the route. Results are cached in `resources/watchman_cache.pkl`.
+
+`config.ROADMAP_MODE` (or `--roadmap watchman` on `main.py`, `run_max_speed.py` and `run_benchmark.py`) uses the watchman cycle itself as the patrol roadmap instead of the KER guard graph; everything downstream is unchanged.
+
+```bash
+python run_polygon_stats.py          # geometric descriptors of the benchmark polygons
+python plot_polygon_stats.py         # descriptors vs. the paper's tracking metrics
+```
+
+`run_polygon_stats.py` tabulates, per polygon, the reflex count, essential cuts, watchman route length, geodesic and link diameters, mean visibility fraction, narrowest passage, class membership (star-shaped, monotone, orthogonal, spiral), and the KER columns and s* read from the latest result files. `plot_polygon_stats.py` draws each descriptor against the per-polygon tracking metrics of Min-Max +Vis with Spearman correlations, plus a correlation heat map, into `benchmark_results/polygon_stats_*.pdf`.
+
+In the GUI, `W` draws the route (teal) with its essential cuts (dashed orange) and touch points, and the `watchman-patrol` strategy in the `S` cycle makes the pursuer walk it, off the patrol roadmap, as an uninformed patrol baseline alongside `tsp-patrol`. It is also available to `run_benchmark.py` as `--strategies watchman-patrol`.
 
 ---
 

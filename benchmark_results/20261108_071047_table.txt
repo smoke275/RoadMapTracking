@@ -1,0 +1,15 @@
+# polygons=['poly9'] strategies=['minmax-alpha', 'minmax-alpha-vis', 'geo-follow', 'greedy-los', 'tsp-patrol', 'watchman-patrol'] evaders=['skeleton', 'adversarial'] seeds=50 frames=600 sp=0.8 se=1.0 workers=20 sequential=False roadmap=watchman
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9@watchman Min-Max α-Guard (Proposed)   Skeleton Evader         4.02±2.17    8.18±6.34 77.44±25.60%     0.0±0.0     0.7±0.8
+poly9@watchman Min-Max +Vis Slack (Proposed) Skeleton Evader         3.94±1.98    7.75±5.54 78.68±25.13%     0.0±0.0     0.7±0.8
+poly9@watchman Geo-Follow                   Skeleton Evader         5.08±2.96   10.92±9.01 92.58±15.74%     0.0±0.0     0.3±0.5
+poly9@watchman Greedy-LOS                   Skeleton Evader         5.56±3.44   12.07±9.50 88.80±20.05%     0.0±0.0     0.4±0.5
+poly9@watchman TSP-Patrol                   Skeleton Evader         7.52±4.37  15.75±10.16 52.40±32.07%     0.0±0.0     1.2±0.7
+poly9@watchman Watchman-Patrol              Skeleton Evader         5.67±2.90   11.28±7.63 62.64±29.09%     0.0±0.0     1.1±0.8
+poly9@watchman Min-Max α-Guard (Proposed)   Adversarial Evader   129.74±111.79 512.81±397.82 78.94±28.10%     1.9±0.8     0.5±0.5
+poly9@watchman Min-Max +Vis Slack (Proposed) Adversarial Evader   184.76±111.34 659.36±354.79 77.74±26.95%     1.9±0.8     0.7±0.7
+poly9@watchman Geo-Follow                   Adversarial Evader   551.50±477.61 1265.33±714.19 75.73±28.53%     1.5±0.6     0.5±0.5
+poly9@watchman Greedy-LOS                   Adversarial Evader   577.60±482.33 1358.38±710.24 75.82±28.51%     1.5±0.6     0.4±0.5
+poly9@watchman TSP-Patrol                   Adversarial Evader   918.87±716.71 1427.47±719.50 36.14±37.83%     1.1±0.4     1.0±0.5
+poly9@watchman Watchman-Patrol              Adversarial Evader   521.60±357.00 1245.49±543.35 65.29±36.45%     1.5±0.6     0.6±0.5
