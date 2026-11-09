@@ -313,17 +313,26 @@ def _closed_tour_dp(M: list):
     return idx, best
 
 
+def _tour_length(geo: PolygonGeodesics, cuts: list, params) -> float:
+    """Length of the closed tour through cuts[i].point(params[i]), in order."""
+    m = len(cuts)
+    P = np.array([cuts[i].point(min(1.0, max(0.0, float(params[i])))) for i in range(m)])
+    return float(sum(geo.distances(P[i][None], P[(i + 1) % m][None])[0, 0]
+                     for i in range(m)))
+
+
 def _refine(geo: PolygonGeodesics, cuts: list, params: list, passes: int = 30,
             tol: float = 1e-7):
     """Coordinate descent: move each touch point along its cut to minimise the
-    two adjacent legs, zooming the search window three times."""
+    two adjacent legs, zooming the search window three times.  A joint
+    bounded Powell polish follows, because the tour length has a kink where
+    the route passes through the intersection of two crossing cuts and no
+    single-coordinate move can improve on it there."""
     m = len(cuts)
     params = list(params)
 
     def tour_length(ps):
-        P = np.array([cuts[i].point(ps[i]) for i in range(m)])
-        return float(sum(geo.distances(P[i][None], P[(i + 1) % m][None])[0, 0]
-                         for i in range(m)))
+        return _tour_length(geo, cuts, ps)
 
     best = tour_length(params)
     for _ in range(passes):
@@ -352,6 +361,16 @@ def _refine(geo: PolygonGeodesics, cuts: list, params: list, passes: int = 30,
         best = min(best, new)
         if not improved:
             break
+    try:
+        from scipy.optimize import minimize
+        res = minimize(tour_length, np.array(params), method='Powell',
+                       bounds=[(0.0, 1.0)] * m,
+                       options={'xtol': 1e-9, 'ftol': 1e-12, 'maxfev': 20000})
+        if res.fun < best - 1e-12:
+            params = [float(min(1.0, max(0.0, x))) for x in res.x]
+            best = float(res.fun)
+    except Exception as exc:                      # pragma: no cover
+        print(f'[WATCHMAN-ROUTE] Powell polish skipped: {exc}')
     return params, best
 
 
