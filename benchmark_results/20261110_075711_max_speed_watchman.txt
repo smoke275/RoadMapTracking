@@ -1,0 +1,14 @@
+# roadmap=watchman grid=25
+Polygon  Verts Corners Guards Grid pts min s_p/s_e    worst evader (x, y) paper 0.8 ok?
+---------------------------------------------------------------------------------------
+poly1       48      22     12      258       3.423         (-93.3, 196.1)            no
+poly2       47      23     15      264       3.428        (-141.6, -36.0)            no
+poly3       23      10      6      275       1.790         (-135.6, 57.3)            no
+poly4       47      20     12      301       6.112           (87.3, 19.8)            no
+poly5       38      17     11      271       4.324         (72.6, -169.0)            no
+poly6       39      17     10      333       4.207         (-40.0, -24.6)            no
+poly7       30      12      6      250       5.819         (-65.6, -78.1)            no
+poly8       60      29     14      208       5.910           (-3.9, 82.6)            no
+poly9       39      17      9      286       5.668         (-71.4, 149.9)            no
+
+min s_p/s_e: max over the grid of the min-max alpha at each evader position (evader speed = 1, grid 25x25). "paper 0.8 ok?" compares against the s_p/s_e = 0.8 regime used in the experiments section — an oracle bound, so "no" means even a zero-transit pursuer cannot guarantee cutoff everywhere.
