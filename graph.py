@@ -73,6 +73,12 @@ class Geodesic:
         self.graph.build([vgpoly])
 
     def shortest_path(self, a, b):
+        import ker_native
+        _nat = ker_native.geo(self, self._poly)
+        if _nat is not None:
+            _sp = _nat.shortest_path(a, b)
+            if _sp is not None:        # None: a point outside the polygon, use the path below
+                return [vg.Point(x, y) for x, y in _sp]
         sp = self.graph.shortest_path(vg.Point(a[0], a[1]), vg.Point(b[0], b[1]))
         if self._path_stays_inside(sp):
             return sp

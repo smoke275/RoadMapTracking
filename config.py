@@ -37,6 +37,12 @@ GUARD_SAMPLES = 100
 # as floating-point slivers by the witness loop.
 COVERAGE_ETA = 2e-4
 
+# ---- Native core ---------------------------------------------------------------
+# Use native/kercore.cpp (built by native/build.sh) for the geodesic distances
+# to the corners and the min-max position on the roadmap. The Python code is
+# used when this is off or the library is missing. KER_NATIVE=0/1 overrides.
+NATIVE_CORE = True
+
 # ---- Multi-pursuer (see corner_groups.py / multi_window.py) ----------------
 # Number of pursuers. 1 runs the original single-pursuer demo; >1 partitions
 # the reflex corners into that many groups (clustered on how often two

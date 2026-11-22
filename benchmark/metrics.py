@@ -21,6 +21,19 @@ def _point_segment_dist(px, py, ax, ay, bx, by):
     return math.hypot(px - (ax + t * abx), py - (ay + t * aby))
 
 
+_EDGE_COORDS = {}     # id(data) -> [(v1, v2, ax, ay, bx, by)]: plain floats, read once
+
+
+def _edge_coords(data):
+    key = id(data)
+    ec = _EDGE_COORDS.get(key)
+    if ec is None or ec[0] is not data.total_edges:
+        ec = _EDGE_COORDS[key] = (data.total_edges, [
+            (v1, v2, data.vertices[v1].x, data.vertices[v1].y,
+             data.vertices[v2].x, data.vertices[v2].y) for v1, v2 in data.total_edges])
+    return ec[1]
+
+
 def alphas_at(pos, path_lengths: dict, data) -> dict:
     """Per-corner alpha at a roadmap position (paper Eq. 1):
         alpha_c(p, e) = d_G(p, c) / d_geo(e, c)
@@ -33,14 +46,13 @@ def alphas_at(pos, path_lengths: dict, data) -> dict:
     """
     px, py = pos
     best = None
-    for v1, v2 in data.total_edges:
-        a, b = data.vertices[v1], data.vertices[v2]
-        d = _point_segment_dist(px, py, a.x, a.y, b.x, b.y)
+    for v1, v2, ax, ay, bx, by in _edge_coords(data):
+        d = _point_segment_dist(px, py, ax, ay, bx, by)
         if best is None or d < best[0]:
-            best = (d, v1, v2)
-    _, u_i, w_i = best
-    d_u = math.hypot(px - data.vertices[u_i].x, py - data.vertices[u_i].y)
-    d_w = math.hypot(px - data.vertices[w_i].x, py - data.vertices[w_i].y)
+            best = (d, v1, v2, ax, ay, bx, by)
+    _, u_i, w_i, ax, ay, bx, by = best
+    d_u = math.hypot(px - ax, py - ay)
+    d_w = math.hypot(px - bx, py - by)
 
     alphas = {}
     for corn in data.corners:

@@ -8,3 +8,15 @@ guard selection: witness-minspeed samples=100  seeds=50 frames=600 workers=22
 2026-11-22 03:09:45 START guard_search_poly4
 2026-11-22 03:14:14 DONE  guard_search_poly4
 2026-11-22 03:14:14 START guard_search_poly5
+2026-11-22 03:18:55 DONE  guard_search_poly5
+2026-11-22 03:18:55 START guard_search_poly6
+2026-11-22 03:25:05 DONE  guard_search_poly6
+2026-11-22 03:25:05 START guard_search_poly7
+2026-11-22 03:28:00 DONE  guard_search_poly7
+2026-11-22 03:28:00 START guard_search_poly8
+2026-11-22 03:44:28 DONE  guard_search_poly8
+2026-11-22 03:44:28 START guard_search_poly9
+2026-11-22 03:51:15 DONE  guard_search_poly9
+2026-11-22 03:51:15 START env_stats
+2026-11-22 03:51:29 DONE  env_stats
+2026-11-22 03:51:29 START max_speed

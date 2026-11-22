@@ -24,6 +24,7 @@ from scipy.sparse import find as sp_find
 from scipy.sparse.csgraph import csgraph_from_dense, floyd_warshall
 from shapely.geometry import LineString, Point, Polygon as ShapelyPolygon
 
+import ker_native
 from cache import load_cache, poly_fingerprint, save_cache
 from config import EPSILON
 from geometry import (add_unique_linestring, add_unique_point, clean_polygon,
@@ -476,6 +477,8 @@ def build(poly, renderer=None, force_recompute: bool = False,
         import hashlib
         fingerprint += ':' + hashlib.sha256(
             str(sorted(stored_guards)).encode()).hexdigest()[:16]
+    if ker_native.available():
+        fingerprint += ':native'          # the roadmap paths come from the native geodesics
     _cached, _cached_geo = (None, None) if force_recompute else load_cache(fingerprint)
 
     if _cached is not None:
@@ -995,6 +998,11 @@ def build(poly, renderer=None, force_recompute: bool = False,
 
 def compute_path_lengths(ex: float, ey: float, data: SimulationData) -> dict:
     """Geodesic distance from evader position to each concave corner."""
+    _nat = ker_native.core(data)
+    if _nat is not None:
+        _pl = _nat.path_lengths(float(ex), float(ey), _PATH_LEN_FLOOR)
+        if _pl is not None:            # None: no corner reached, use the path below
+            return _pl
     path_lengths = {}
     for cors in data.corners:
         pt_a = [ex, ey]
@@ -1155,6 +1163,10 @@ def compute_optimal_guard(path_lengths: dict, data: SimulationData, corners=None
     Weights at the two edge endpoints are precomputed (cached), and interpolated
     linearly to the tent breakpoint.
     """
+    if not _GATING_ENABLED:
+        _nat = ker_native.core(data)
+        if _nat is not None:
+            return _nat.optimal_guard(path_lengths, corners)
     _nf = _get_node_vis_fracs(data)
 
     edge_points = []
@@ -1277,6 +1289,10 @@ def _opt_offset(path_lengths, v1_idx, v2_idx, data, corners=None):
     """Re-derive the scalar offset along (v1→v2) for the optimal guard point
     (mirrors compute_optimal_guard with the same soft-gating and the same
     optional corner subset)."""
+    if not _GATING_ENABLED:
+        _nat = ker_native.core(data)
+        if _nat is not None:
+            return _nat.edge_offset(path_lengths, v1_idx, v2_idx, corners)
     _nf = _get_node_vis_fracs(data)
 
     for edge in data.total_edges:
