@@ -1,0 +1,7 @@
+# polygons=['poly9'] strategies=['minmax-alpha', 'minmax-alpha-vis', 'geo-follow', 'greedy-los'] evaders=['escaping'] seeds=50 frames=600 sp=1.2 se=1.0 workers=22 sequential=False roadmap=None
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9        Min-Max α-Guard (Proposed)   Escaping Evader      320787.31±755064.53 24527019.20±48860802.89 91.76±15.94%    14.2±50.5     0.4±0.7
+poly9        Min-Max +Vis Slack (Proposed) Escaping Evader      285874.43±719525.65 25144391.43±49113714.81  96.42±5.40%    10.9±40.0     0.3±0.5
+poly9        Geo-Follow                   Escaping Evader      1052839.23±2252593.40 36206243.14±49799457.79  88.24±8.36%     3.8±1.5     0.9±0.5
+poly9        Greedy-LOS                   Escaping Evader      1167613.89±2554876.82 34058515.05±49684972.85  89.39±9.88%     3.5±1.2     0.8±0.5

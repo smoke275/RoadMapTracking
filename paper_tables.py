@@ -255,13 +255,14 @@ def main():
     print('\n%%%% Watchman comparison on poly9')
     for h, rows in runs:
         if 'watchman' in h['strategies'] or h['roadmap'] == 'watchman':
+            env = rows[0]['environment']          # 'poly9@watchman' on the watchman roadmap
             for s in STRATS[:5] + ['watchman-patrol']:
                 for ev in ('skeleton', 'adversarial'):
-                    v = col(rows, 'poly9', s, ev, 'mean_alpha')
+                    v = col(rows, env, s, ev, 'mean_alpha')
                     if v:
                         print(f'% roadmap={h["roadmap"]:8s} {SHORT[s]:9s} {ev:11s} mean alpha {st.mean(v):.2f} '
-                              f'%LOS {st.mean(col(rows, "poly9", s, ev, "los_pct")):.1f} '
-                              f'esc {st.mean(col(rows, "poly9", s, ev, "n_escape")):.2f}')
+                              f'%LOS {st.mean(col(rows, env, s, ev, "los_pct")):.1f} '
+                              f'esc {st.mean(col(rows, env, s, ev, "n_escape")):.2f}')
 
     # ---- Multi-evader table ----------------------------------------------------------
     print('\n%%%% Table multi_evader (k pursuers against m evaders, sp = 0.8)')

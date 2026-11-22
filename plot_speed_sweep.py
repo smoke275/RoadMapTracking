@@ -20,13 +20,20 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-S_STAR = {1: 1.682, 2: 1.134, 3: 1.004}   # poly9, Table IV
+S_STAR = {1: 1.187, 2: 1.012, 3: 1.017}   # poly9, team partition table (2026-11-22 run)
+SINCE = ''   # only result files with a time stamp at or after this are read (--since)
+
+
+def _tables():
+    import os
+    return [f for f in sorted(glob.glob('benchmark_results/*_table.txt'))
+            if os.path.basename(f)[:15] >= SINCE]
 
 
 def load_k1_sweep():
     """ratio -> {(strategy, evader, metric): mean} from the sweep runs."""
     out = {}
-    for f in sorted(glob.glob('benchmark_results/*_table.txt')):
+    for f in _tables():
         head = open(f).readline()
         if "strategies=['minmax-alpha', 'minmax-alpha-vis']" not in head:
             continue
@@ -47,7 +54,7 @@ def load_k1_sweep():
 def load_escaping_sweep():
     """ratio -> {strategy: mean escapes} from the escaping-adversary runs."""
     out = {}
-    for f in sorted(glob.glob('benchmark_results/*_table.txt')):
+    for f in _tables():
         head = open(f).readline()
         if "evaders=['escaping']" not in head or 'seeds=50' not in head:
             continue
@@ -67,7 +74,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default='RoadmapBasedTracking/figures/speed_sweep.pdf')
     ap.add_argument('--team-jsons', nargs='*', default=[])
+    ap.add_argument('--since', default='', help='first time stamp to read, e.g. 20261122_042800')
     args = ap.parse_args()
+    global SINCE
+    SINCE = args.since
 
     sweep = load_k1_sweep()
     ratios = list(sweep)
@@ -80,9 +90,9 @@ def main():
         y_pos = ymin + y_frac * (ymax - ymin)
         for k in ks:
             ax.axvline(S_STAR[k], color='0.45', ls=':', lw=1.1)
-            lbl = f'$s^\\star_{{{k}}}$' if k > 1 else '$s^\\star$'
-            ha = 'right' if k == 3 else 'left'
-            dx = -0.02 if k == 3 else 0.02
+            # s*_2 and s*_3 coincide within the grid resolution: one line, one label
+            lbl = '$s^\\star_2, s^\\star_3$' if k > 1 else '$s^\\star$'
+            ha, dx = 'left', 0.02
             ax.text(S_STAR[k] + dx, y_pos, lbl, ha=ha, va='top',
                     fontsize=9, color='0.35')
 
@@ -93,7 +103,7 @@ def main():
     for s, sty in styles.items():
         ax.plot(ratios, [sweep[r][(s, 'skeleton', 'los_pct')] for r in ratios],
                 lw=1.5, ms=3.8, **sty)
-    ax.set_ylim(79.5, 97.2)
+    ax.margins(y=0.25)
     ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('%LOS (skeleton)')
     ax.legend(fontsize=8.5, loc='lower right'); mark_sstar(ax)
 
@@ -105,9 +115,9 @@ def main():
                    ('geo-follow', dict(color='C2', marker='^', label='Geo-Follow')),
                    ('greedy-los', dict(color='C3', marker='v', label='Greedy-LOS'))]:
         ax.plot(e_ratios, [esc[r].get(s) for r in e_ratios], lw=1.5, ms=3.8, **sty)
-    ax.set_ylim(0.3, 1.52)
+    ax.set_ylim(0.0, 1.62)
     ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('escapes/trial (escaping adv.)')
-    ax.legend(fontsize=8, loc='lower left', framealpha=0.9); mark_sstar(ax)
+    ax.legend(fontsize=8, loc='upper right', framealpha=0.9); mark_sstar(ax, y_frac=0.12)
 
     if args.team_jsons:
         team = {}   # sp -> {k: in_view}
@@ -120,9 +130,9 @@ def main():
         for k, c in [(1, 'C0'), (2, 'C2'), (3, 'C3')]:
             ax.plot(list(team), [team[r][k] for r in team], color=c,
                     marker='o', ms=3.8, lw=1.5, label=f'$k={k}$')
-        ax.set_ylim(77.0, 96.8)
+        ax.set_ylim(74.0, 94.0)
         ax.set_xlabel('$s_p/s_e$'); ax.set_ylabel('% in view ($m=1$)')
-        ax.legend(fontsize=8.5, loc='lower right'); mark_sstar(ax, ks=(1, 2, 3), y_frac=0.92)
+        ax.legend(fontsize=8.5, loc='lower right'); mark_sstar(ax, ks=(2,), y_frac=0.97); mark_sstar(ax, ks=(1,), y_frac=0.84)
 
     for ax in axes:
         ax.grid(alpha=0.3)
