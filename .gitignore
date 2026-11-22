@@ -23,3 +23,4 @@ video/out/*.png
 video/out/*.txt
 video/out/*.json
 video/out/*.log
+benchmark_results/logs/minspeed_*/guard_search_*.log
