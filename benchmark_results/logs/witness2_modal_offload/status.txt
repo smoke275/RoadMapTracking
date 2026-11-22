@@ -1,4 +1,0 @@
-2026-11-21 22:13:13 sent to Modal, not run locally: DONE  bench_poly2
-2026-11-21 22:13:13 sent to Modal, not run locally: DONE  bench_kernel_poly2
-2026-11-21 22:13:13 sent to Modal, not run locally: DONE  bench_poly8
-2026-11-21 22:13:13 sent to Modal, not run locally: DONE  bench_kernel_poly8

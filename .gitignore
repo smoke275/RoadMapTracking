@@ -23,4 +23,9 @@ video/out/*.png
 video/out/*.txt
 video/out/*.json
 video/out/*.log
-benchmark_results/logs/minspeed_*/guard_search_*.log
+
+# Generated files: run logs, compiled native core, encoder statistics
+benchmark_results/logs/
+benchmark_results/modal_*/**/*.log
+native/*.so
+video/out/*.mbtree

@@ -1,38 +1,0 @@
-=== poly9 ===
-Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
-KER coverage computed in 0.32s
-Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
-[INFO] Guard set: 6 stored guards (minimum set with the smallest critical speed ratio).
-Set cover solved in 0.000s (6 guards selected)
-  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 502.29it/s]
-[INFO] Geodesic graph built.
-[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
-[OK] Roadmap (ker) meets every association region (94 vertices, 16 segments).
-[CACHE] Saved.
-[SKEL] Building Voronoi skeleton…
-[SKEL] 419 nodes, 408 edges
-  fine grid: 286 interior points (0s)
-  affinity 1/45  affinity 2/45  affinity 3/45  affinity 4/45  affinity 5/45  affinity 6/45  affinity 7/45  affinity 8/45  affinity 9/45  affinity 10/45  affinity 11/45  affinity 12/45  affinity 13/45  affinity 14/45  affinity 15/45  affinity 16/45  affinity 17/45  affinity 18/45  affinity 19/45  affinity 20/45  affinity 21/45  affinity 22/45  affinity 23/45  affinity 24/45  affinity 25/45  affinity 26/45  affinity 27/45  affinity 28/45  affinity 29/45  affinity 30/45  affinity 31/45  affinity 32/45  affinity 33/45  affinity 34/45  affinity 35/45  affinity 36/45  affinity 37/45  affinity 38/45  affinity 39/45  affinity 40/45  affinity 41/45  affinity 42/45  affinity 43/45  affinity 44/45  affinity 45/45
-[GROUPS] iter 0: corner 0 0->1  alpha 1.161 -> 1.048
-[GROUPS] iter 1: corner 19 1->0  alpha 1.048 -> 1.046
-[GROUPS] iter 2: corner 24 1->0  alpha 1.046 -> 1.025
-[GROUPS] iter 3: corner 17 0->1  alpha 1.025 -> 1.012
-  k=2 heuristic refined: s*=1.012 at (-143.5, 54.1)  groups=[[0, 17], [2, 5, 6, 11, 12, 13, 18, 19, 24, 27, 29, 30, 31, 34, 35]]  per-group worst=[0.88, 1.01]
-[GROUPS] affinity loaded from cache.
-
-[GROUPS] iter 0: corner 0 0->1  alpha 1.161 -> 1.048
-[GROUPS] iter 1: corner 19 1->0  alpha 1.048 -> 1.025
-[GROUPS] iter 2: corner 17 0->1  alpha 1.025 -> 1.010
-[GROUPS] iter 3: corner 29 0->2  alpha 1.010 -> 1.008
-[GROUPS] iter 4: corner 19 0->2  alpha 1.008 -> 0.967
-[GROUPS] iter 5: corner 29 2->0  alpha 0.967 -> 0.877
-  k=3 heuristic refined: s*=1.001 at (-71.4, 149.9)  groups=[[0, 17], [2, 5, 6, 11, 12, 13, 18, 27, 29, 30, 31, 34, 35], [19, 24]]  per-group worst=[0.88, 1.0, 0.0]
-
-Polygon   k Method                s*_k  Lambda   groups (per-group worst alpha)
--------------------------------------------------------------------------------
-poly9     2 heuristic refined    1.012     -     [0, 17] (0.88)  [2, 5, 6, 11, 12, 13, 18, 19, 24, 27, 29, 30, 31, 34, 35] (1.01)
-poly9     3 heuristic refined    1.001     -     [0, 17] (0.88)  [2, 5, 6, 11, 12, 13, 18, 27, 29, 30, 31, 34, 35] (1.00)  [19, 24] (0.00)
-
-s*_k: max over a 25x25 evader grid of the k-pursuer alpha (max over groups of that group's optimal alpha); evader speed = 1, zero-transit pursuers. Lambda: nearness-weighted fraction of (evader position, corner) pairs whose pursuer keeps line of sight for the whole escape from its chosen position (ILP grid 8x8, positions every 15.0 units).
-
-[SAVED] /app/benchmark_results/20261122_043923_groups.txt
