@@ -1,0 +1,6 @@
+guard selection: witness  seeds=50 frames=600 workers=22
+2026-11-21 18:23:34 START bench_poly3
+2026-11-21 18:30:53 DONE  bench_poly3
+2026-11-21 18:30:53 START bench_kernel_poly3
+2026-11-21 18:31:12 DONE  bench_kernel_poly3
+2026-11-21 18:31:12 START bench_poly9

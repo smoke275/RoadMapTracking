@@ -16,6 +16,14 @@ from scipy.spatial import Voronoi as SciVoronoi
 _rng = random.Random()
 
 
+def seed_evader_rng(seed: int) -> None:
+    """Seed the evader's destination RNG. The benchmark trial runners call this
+    with the trial seed, so that a seed fixes the evader's whole waypoint
+    sequence (not only its start), which makes trials repeatable and the
+    comparison across strategies paired. The interactive GUI never calls it."""
+    _rng.seed(seed)
+
+
 def build_voronoi_skeleton(shapely_poly: Polygon, samples: int = 300):
     """
     Sample the polygon boundary, compute interior Voronoi edges, return:

@@ -1,0 +1,2 @@
+guard selection: witness-minspeed samples=100  seeds=50 frames=600 workers=22
+2026-11-22 02:48:42 START guard_search_poly1

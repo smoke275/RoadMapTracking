@@ -152,6 +152,164 @@ def solve_set_cover_ilp(KER_corner_list, corners):
     return chosen
 
 
+def _vis_shape_of(pt, env):
+    """Visibility polygon of a visilibity point as a valid shapely polygon."""
+    vp = vis.Visibility_Polygon(pt, env, EPSILON)
+    vx, vy = poly_to_points(vp)
+    shp = ShapelyPolygon(list(zip(vx, vy)))
+    return shp if shp.is_valid else shp.buffer(0)
+
+
+def _solve_rows_sampled(rows, n_cands, rng):
+    """A minimum set cover drawn with random tie-breaking: candidates that
+    appear in the same rows are represented by a random member, dominated
+    candidates are kept, and every cost is 1 plus a random perturbation whose
+    sum over all candidates is below 1, so the cardinality stays minimum."""
+    sig = [set() for _ in range(n_cands)]
+    for r, row in enumerate(rows):
+        for i in row:
+            sig[i].add(r)
+    groups = {}
+    for i in range(n_cands):
+        if sig[i]:
+            groups.setdefault(frozenset(sig[i]), []).append(i)
+    keep = [(s, int(rng.choice(members))) for s, members in groups.items()]
+    A = np.zeros((len(rows), len(keep)), dtype=float)
+    for k, (s, _) in enumerate(keep):
+        A[list(s), k] = 1.0
+    cost = 1.0 + rng.uniform(0.0, 0.5 / len(keep), len(keep))
+    res = milp(c=cost,
+               constraints=LinearConstraint(A, lb=1.0, ub=np.inf),
+               integrality=np.ones(len(keep)), bounds=Bounds(lb=0.0, ub=1.0))
+    if not res.success or res.x is None:
+        return None
+    return [keep[k][1] for k in range(len(keep)) if res.x[k] > 0.5]
+
+
+def _solve_rows(rows, n_cands, rng=None):
+    """Exact minimum set cover for constraint rows (each a set of candidate
+    indices). Candidates that appear in the same rows are merged and
+    dominated candidates are removed before the 0/1 program is solved.
+    With rng, a minimum cover is drawn with random tie-breaking instead."""
+    if rng is not None:
+        return _solve_rows_sampled(rows, n_cands, rng)
+    sig = [set() for _ in range(n_cands)]
+    for r, row in enumerate(rows):
+        for i in row:
+            sig[i].add(r)
+    first = {}
+    for i in range(n_cands):
+        if sig[i]:
+            first.setdefault(frozenset(sig[i]), i)
+    sigs = sorted(first.items(), key=lambda kv: -len(kv[0]))
+    keep = []
+    for s, i in sigs:
+        if not any(s < sk for sk, _ in keep):
+            keep.append((s, i))
+    A = np.zeros((len(rows), len(keep)), dtype=float)
+    for k, (s, _) in enumerate(keep):
+        A[list(s), k] = 1.0
+    res = milp(c=np.ones(len(keep)),
+               constraints=LinearConstraint(A, lb=1.0, ub=np.inf),
+               integrality=np.ones(len(keep)), bounds=Bounds(lb=0.0, ub=1.0))
+    if not res.success or res.x is None:
+        return None
+    return [keep[k][1] for k in range(len(keep)) if res.x[k] > 0.5]
+
+
+def solve_guard_set_witness(KER, KER_corner_list, corners, env, shapely_env,
+                            eta_frac=None, max_rounds=60, rng=None):
+    """
+    Minimum guard set over the candidates KER (Algorithm 1 of the paper).
+
+    Corner rows: for every corner c, at least one selected candidate lies in
+    A(c) (KER_corner_list, built with the delta tolerance). Witness rows are
+    generated on demand: after each solve, one point of every connected
+    component of the region the selected candidates do not see is added, with
+    the row of candidates that see it (exact visibility, no tolerance).
+    Components with area below eta_frac * area(P) are treated as
+    floating-point slivers and ignored. Returns candidate indices.
+    With rng, ties between minimum sets are broken at random (used by
+    select_guard_set.py to sample minimum guard sets).
+    """
+    import config as _config
+    from shapely.ops import unary_union
+    import shapely as _shp
+    if eta_frac is None:
+        eta_frac = _config.COVERAGE_ETA
+    n = len(KER)
+    geom = _shp.points(np.array([(k.x(), k.y()) for k in KER]))
+    inside = set(np.where(_shp.covers(shapely_env.buffer(1), geom))[0].tolist())
+    rows_c = []
+    for c in corners:
+        row = {i for i in range(n) if c in KER_corner_list[i]} & inside
+        if not row:
+            print(f'[WARNING] No candidate serves corner {c}; its row is skipped.')
+            continue
+        rows_c.append(row)
+    rows_w, witnesses = [], []
+    area = shapely_env.area
+    chosen = []
+    for rnd in range(1, max_rounds + 1):
+        sol = _solve_rows(rows_c + rows_w, n, rng)
+        if sol is None:
+            print('[WARNING] Guard-set ILP infeasible; keeping the last solution.')
+            break
+        chosen = sol
+        seen = unary_union([_vis_shape_of(KER[i], env) for i in chosen])
+        U = shapely_env.difference(seen)
+        comps = [g for g in getattr(U, 'geoms', [U])
+                 if g.geom_type == 'Polygon' and g.area >= eta_frac * area]
+        if not comps:
+            break
+        added = 0
+        for g in comps:
+            w = g.centroid if g.contains(g.centroid) else g.representative_point()
+            vw = _vis_shape_of(vis.Point(w.x, w.y), env)
+            row = (set(np.where(_shp.covers(vw.buffer(1e-6), geom))[0].tolist())
+                   & inside) - set(chosen)
+            if not row:
+                continue
+            rows_w.append(row); witnesses.append((w.x, w.y)); added += 1
+        if not added:
+            print('[WARNING] Unseen components admit no candidate; stopping.')
+            break
+    print(f'[INFO] Guard set (witness ILP): {len(chosen)}/{n} candidates, '
+          f'{rnd} solve(s), {len(witnesses)} witness point(s).')
+    return chosen
+
+
+GUARD_SETS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               'resources', 'guard_sets.json')
+
+
+def load_stored_guard_set(poly_fp: str):
+    """Guard coordinates select_guard_set.py stored for this polygon
+    fingerprint (the minimum guard set with the smallest critical speed
+    ratio among its samples), or None."""
+    import json
+    try:
+        with open(GUARD_SETS_FILE) as f:
+            entry = json.load(f).get(poly_fp)
+    except (OSError, ValueError):
+        return None
+    return [tuple(g) for g in entry['guards']] if entry else None
+
+
+def _match_candidates(KER, coords, tol=1e-6):
+    """Indices of the candidates at the stored guard coordinates."""
+    xy = np.array([(k.x(), k.y()) for k in KER])
+    out = []
+    for gx, gy in coords:
+        d = np.hypot(xy[:, 0] - gx, xy[:, 1] - gy)
+        i = int(np.argmin(d))
+        if d[i] > tol:
+            raise ValueError(f'stored guard ({gx}, {gy}) is not a candidate; '
+                             f'rerun select_guard_set.py for this polygon')
+        out.append(i)
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Colours referenced during pipeline display
 # ---------------------------------------------------------------------------
@@ -256,7 +414,7 @@ def compute_corner_asso(poly, corners, env) -> dict:
 # One-time pipeline build
 # ---------------------------------------------------------------------------
 def build(poly, renderer=None, force_recompute: bool = False,
-          roadmap: str = None) -> SimulationData:
+          roadmap: str = None, guard_sample: int = None) -> SimulationData:
     """
     Run the full KER pipeline and return a SimulationData object.
 
@@ -266,6 +424,10 @@ def build(poly, renderer=None, force_recompute: bool = False,
     roadmap   — 'ker' (geodesics between the selected guards) or 'watchman'
                 (the shortest watchman route as the patrol graph); defaults
                 to config.ROADMAP_MODE.
+    guard_sample — used by select_guard_set.py only. 0 builds on the guard
+                set of the plain witness selection, s > 0 on the minimum
+                guard set drawn with random tie-breaking from seed s. The
+                result is neither read from nor written to the cache.
     """
     import config as _config
     roadmap = roadmap or _config.ROADMAP_MODE
@@ -296,6 +458,24 @@ def build(poly, renderer=None, force_recompute: bool = False,
     fingerprint        = poly_fingerprint(poly)
     if roadmap != 'ker':
         fingerprint += f':{roadmap}'      # 'ker' keeps the historical key
+    guard_mode = _config.GUARD_SELECTION
+    if guard_mode not in ('witness', 'witness-minspeed', 'contraction'):
+        raise ValueError(f'unknown guard selection {guard_mode!r}')
+    stored_guards = None
+    if guard_sample is not None:
+        guard_mode, force_recompute = 'witness', True
+    elif guard_mode == 'witness-minspeed':
+        stored_guards = load_stored_guard_set(poly_fingerprint(poly))
+        if stored_guards is None:
+            print('[WARNING] No stored guard set for this polygon (run '
+                  'select_guard_set.py); using the plain witness selection.')
+            guard_mode = 'witness'
+    if guard_mode != 'contraction':
+        fingerprint += f':{guard_mode}'   # 'contraction' keeps the historical key
+    if stored_guards is not None:
+        import hashlib
+        fingerprint += ':' + hashlib.sha256(
+            str(sorted(stored_guards)).encode()).hexdigest()[:16]
     _cached, _cached_geo = (None, None) if force_recompute else load_cache(fingerprint)
 
     if _cached is not None:
@@ -366,74 +546,78 @@ def build(poly, renderer=None, force_recompute: bool = False,
         asso = compute_corner_asso(poly, corners, env)
         print(f'Corners: {corners}')
 
-        # ---- KER boundary contraction -----------------------------------
-        boundary        = list(range(len(poly)))
-        current_corners = corners.copy()
-        corner_clusters = {k: [k] for k in corners}
-        vertex_clusters = {k: {k} for k in corners}
+        # Boundary contraction and guard regions (the earlier selection). The
+        # default 'witness' selection uses the full association regions A(c).
+        random.seed(90)   # fixes every later random draw of the build in both modes
+        if guard_mode == 'contraction':
+            # ---- KER boundary contraction -----------------------------------
+            boundary        = list(range(len(poly)))
+            current_corners = corners.copy()
+            corner_clusters = {k: [k] for k in corners}
+            vertex_clusters = {k: {k} for k in corners}
 
-        random.seed(90)
-        while current_corners:
-            if len(current_corners) == 1:
-                lc = current_corners[0]
-                for ii in boundary:
-                    vertex_clusters[lc].add(ii)
+            random.seed(90)
+            while current_corners:
+                if len(current_corners) == 1:
+                    lc = current_corners[0]
+                    for ii in boundary:
+                        vertex_clusters[lc].add(ii)
 
-            mod_k = None
-            for (j, k) in itertools.product(current_corners, [-1, 1]):
-                d  = boundary.index(j)
-                m  = (d + 2 * k) % len(boundary)
-                m1 = (d + k)     % len(boundary)
-                with suppress_output():
-                    sp = env.shortest_path(poly[j], poly[boundary[m]], EPSILON)
-                if len(sp.path()) == 2:
-                    corner_clusters[j].extend([boundary[m], boundary[m1]])
-                    vertex_clusters[j].add(boundary[m1])
-                    mod_k = (d + k) % len(boundary)
+                mod_k = None
+                for (j, k) in itertools.product(current_corners, [-1, 1]):
+                    d  = boundary.index(j)
+                    m  = (d + 2 * k) % len(boundary)
+                    m1 = (d + k)     % len(boundary)
+                    with suppress_output():
+                        sp = env.shortest_path(poly[j], poly[boundary[m]], EPSILON)
+                    if len(sp.path()) == 2:
+                        corner_clusters[j].extend([boundary[m], boundary[m1]])
+                        vertex_clusters[j].add(boundary[m1])
+                        mod_k = (d + k) % len(boundary)
+                        break
+
+                if mod_k is None:
                     break
+                boundary = [b for i, b in enumerate(boundary) if i != mod_k]
 
-            if mod_k is None:
-                break
-            boundary = [b for i, b in enumerate(boundary) if i != mod_k]
+                removal = []
+                for corner in current_corners:
+                    d = boundary.index(corner)
+                    a = poly[boundary[(d - 1) % len(boundary)]]
+                    b = poly[boundary[d]]
+                    c = poly[boundary[(d + 1) % len(boundary)]]
+                    s = [b.x() - a.x(), b.y() - a.y()]
+                    t = [c.x() - b.x(), c.y() - b.y()]
+                    if s[0] * t[1] - t[0] * s[1] > _CROSS_EPS:   # epsilon guards near-collinear
+                        removal.append(corner)
+                current_corners = removal
 
-            removal = []
-            for corner in current_corners:
-                d = boundary.index(corner)
-                a = poly[boundary[(d - 1) % len(boundary)]]
-                b = poly[boundary[d]]
-                c = poly[boundary[(d + 1) % len(boundary)]]
-                s = [b.x() - a.x(), b.y() - a.y()]
-                t = [c.x() - b.x(), c.y() - b.y()]
-                if s[0] * t[1] - t[0] * s[1] > _CROSS_EPS:   # epsilon guards near-collinear
-                    removal.append(corner)
-            current_corners = removal
+                if renderer:
+                    bx = [poly[k].x() for k in boundary]
+                    by = [poly[k].y() for k in boundary]
+                    renderer._d_polygon(x, y, Qt.white, 3)
+                    renderer._d_vertex_labels(poly)
+                    renderer._d_polygon(bx, by, Qt.darkGreen, 2)
+                    for b in current_corners:
+                        renderer._d_dot(poly[b].x(), poly[b].y(), 6, C_CORNER)
+                    _show()
 
-            if renderer:
-                bx = [poly[k].x() for k in boundary]
-                by = [poly[k].y() for k in boundary]
-                renderer._d_polygon(x, y, Qt.white, 3)
-                renderer._d_vertex_labels(poly)
-                renderer._d_polygon(bx, by, Qt.darkGreen, 2)
-                for b in current_corners:
-                    renderer._d_dot(poly[b].x(), poly[b].y(), 6, C_CORNER)
-                _show()
-
-        # ---- Refine asso with vertex cluster visibility intersections ---
-        for key, cluster in vertex_clusters.items():
-            for i in cluster:
-                vispol = vis.Visibility_Polygon(poly[i], env, EPSILON)
-                px_, py_ = poly_to_points(vispol)
-                px_.reverse()
-                py_.reverse()
-                clip = [(px_[k], py_[k]) for k in range(len(px_))]
-                if asso[key] is None:
-                    continue
-                pc = pyclipper.Pyclipper()
-                pc.AddPath(clip, pyclipper.PT_CLIP, True)
-                pc.AddPath(asso[key], pyclipper.PT_SUBJECT, True)
-                sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
-                pc.Clear()
-                asso[key] = sol[0] if sol else None
+            # ---- Refine asso with vertex cluster visibility intersections ---
+            for key, cluster in vertex_clusters.items():
+                for i in cluster:
+                    vispol = vis.Visibility_Polygon(poly[i], env, EPSILON)
+                    px_, py_ = poly_to_points(vispol)
+                    px_.reverse()
+                    py_.reverse()
+                    clip = [(px_[k], py_[k]) for k in range(len(px_))]
+                    if asso[key] is None:
+                        continue
+                    pc = pyclipper.Pyclipper()
+                    pc.AddPath(clip, pyclipper.PT_CLIP, True)
+                    pc.AddPath(asso[key], pyclipper.PT_SUBJECT, True)
+                    sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
+                    pc.Clear()
+                    asso[key] = sol[0] if sol else None
 
         # ---- Display coloured asso regions ------------------------------
         palette = sns.color_palette('husl', len(corners))
@@ -552,14 +736,25 @@ def build(poly, renderer=None, force_recompute: bool = False,
 
         output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    'resources', 'output.txt')
-        with open(output_path, 'w') as f:
-            for e in KER_corner_list:
-                f.write(f'{e}\n')
+        if guard_sample is None:
+            with open(output_path, 'w') as f:
+                for e in KER_corner_list:
+                    f.write(f'{e}\n')
 
         # ---- Set cover via ILP ------------------------------------------
         print(f'Total: {len(corners)} corners — {corners}')
         ts = time.time()
-        chosed_set = solve_set_cover_ilp(KER_corner_list, corners)
+        if stored_guards is not None:
+            chosed_set = _match_candidates(KER, stored_guards)
+            print(f'[INFO] Guard set: {len(chosed_set)} stored guards '
+                  f'(minimum set with the smallest critical speed ratio).')
+        elif guard_mode == 'witness':
+            _rng = (np.random.default_rng(guard_sample)
+                    if guard_sample else None)
+            chosed_set = solve_guard_set_witness(KER, KER_corner_list, corners,
+                                                 env, shapely_env, rng=_rng)
+        else:
+            chosed_set = solve_set_cover_ilp(KER_corner_list, corners)
         print(f'Set cover solved in {time.time()-ts:.3f}s '
               f'({len(chosed_set)} guards selected)')
 
@@ -742,7 +937,7 @@ def build(poly, renderer=None, force_recompute: bool = False,
             print(f'[OK] Roadmap ({roadmap}) meets every association region '
                   f'({len(vertices)} vertices, {len(path_lines)} segments).')
 
-        save_cache(fingerprint, {
+        if guard_sample is None: save_cache(fingerprint, {
             'corners':             list(corners),
             'asso':                dict(asso),
             'KER_coords':          [(p.x(), p.y()) for p in KER],

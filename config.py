@@ -21,6 +21,22 @@ GEO_FILE    = os.path.join(_SCRIPT_DIR, 'resources', 'ker_geodesic.graph')
 # run_benchmark.py take --roadmap to override this per run.
 ROADMAP_MODE = 'ker'
 
+# ---- Guard selection ---------------------------------------------------------
+# 'witness'     : minimum subset of the KER candidates that puts a guard in every
+#                 association region A(c) and sees the whole polygon (Algorithm 1
+#                 of the paper: set-cover ILP with witness points added on demand).
+# 'witness-minspeed' : among the minimum guard sets, the one with the smallest
+#                 critical speed ratio found by select_guard_set.py (stored in
+#                 resources/guard_sets.json; falls back to 'witness' if absent).
+# 'contraction' : the earlier selection (boundary contraction, guard regions,
+#                 corner rows only). Kept to reproduce results before 2026-11-21.
+GUARD_SELECTION = 'witness-minspeed'
+# Minimum guard sets sampled per polygon by select_guard_set.py.
+GUARD_SAMPLES = 100
+# Unseen components smaller than this fraction of the polygon area are treated
+# as floating-point slivers by the witness loop.
+COVERAGE_ETA = 2e-4
+
 # ---- Multi-pursuer (see corner_groups.py / multi_window.py) ----------------
 # Number of pursuers. 1 runs the original single-pursuer demo; >1 partitions
 # the reflex corners into that many groups (clustered on how often two

@@ -1,0 +1,22 @@
+=== poly6 (22 workers, roadmap=ker) ===
+Corners: [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+KER coverage computed in 0.22s
+Total: 17 corners — [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+[INFO] Guard set (witness ILP): 6/996 candidates, 1 solve(s), 0 witness point(s).
+Set cover solved in 0.011s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 478.21it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (132 vertices, 23 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 403 nodes, 393 edges
+  [poly6 | kernel-control | skeleton] 25/50 trials  (36s elapsed, ~36s remaining, 22 workers)
+  [poly6 | kernel-control | skeleton] 50/50 trials  (57s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly6        Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25) Skeleton Evader         3.48±1.25    8.60±7.19 84.67±21.75%     0.0±0.0     0.5±0.7
+
+[SAVED] /app/benchmark_results/20261121_222505_table.txt
+[SAVED] /app/benchmark_results/20261121_222505_raw.csv

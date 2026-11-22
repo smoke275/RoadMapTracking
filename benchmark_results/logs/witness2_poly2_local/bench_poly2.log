@@ -1,0 +1,30 @@
+=== poly2 (22 workers, roadmap=ker) ===
+Corners: [2, 3, 6, 7, 10, 11, 12, 14, 17, 18, 22, 23, 25, 28, 29, 32, 33, 34, 38, 39, 41, 44, 46]
+KER coverage computed in 0.79s
+Total: 23 corners — [2, 3, 6, 7, 10, 11, 12, 14, 17, 18, 22, 23, 25, 28, 29, 32, 33, 34, 38, 39, 41, 44, 46]
+[INFO] Guard set (witness ILP): 8/2249 candidates, 6 solve(s), 10 witness point(s).
+Set cover solved in 0.057s (8 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 393.12it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (223 vertices, 29 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 411 nodes, 391 edges
+  [poly2 | minmax-alpha | skeleton] 25/50 trials  (415s elapsed, ~415s remaining, 22 workers)
+  [poly2 | minmax-alpha | skeleton] 50/50 trials  (648s elapsed, ~0s remaining, 22 workers)
+  [poly2 | minmax-alpha-vis | skeleton] 25/50 trials  (415s elapsed, ~415s remaining, 22 workers)
+  [poly2 | minmax-alpha-vis | skeleton] 50/50 trials  (632s elapsed, ~0s remaining, 22 workers)
+  [poly2 | geo-follow | skeleton] 25/50 trials  (95s elapsed, ~95s remaining, 22 workers)
+  [poly2 | geo-follow | skeleton] 50/50 trials  (147s elapsed, ~0s remaining, 22 workers)
+  [poly2 | greedy-los | skeleton] 25/50 trials  (89s elapsed, ~89s remaining, 22 workers)
+  [poly2 | greedy-los | skeleton] 50/50 trials  (129s elapsed, ~0s remaining, 22 workers)
+  [poly2 | tsp-patrol | skeleton] 25/50 trials  (80s elapsed, ~80s remaining, 22 workers)
+  [poly2 | tsp-patrol | skeleton] 50/50 trials  (119s elapsed, ~0s remaining, 22 workers)
+  [poly2 | minmax-alpha | adversarial] 25/50 trials  (642s elapsed, ~642s remaining, 22 workers)
+  [poly2 | minmax-alpha | adversarial] 50/50 trials  (869s elapsed, ~0s remaining, 22 workers)
+  [poly2 | minmax-alpha-vis | adversarial] 25/50 trials  (513s elapsed, ~513s remaining, 22 workers)
+  [poly2 | minmax-alpha-vis | adversarial] 50/50 trials  (726s elapsed, ~0s remaining, 22 workers)
+  [poly2 | geo-follow | adversarial] 25/50 trials  (84s elapsed, ~84s remaining, 22 workers)
+  [poly2 | geo-follow | adversarial] 50/50 trials  (125s elapsed, ~0s remaining, 22 workers)
+  [poly2 | greedy-los | adversarial] 25/50 trials  (61s elapsed, ~61s remaining, 22 workers)

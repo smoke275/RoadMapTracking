@@ -1,0 +1,105 @@
+=== poly9 ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.32s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] Guard set (witness ILP): 6/1477 candidates, 3 solve(s), 2 witness point(s).
+Set cover solved in 0.012s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 522.00it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 99.9970% of the environment (uncovered area 9.6087 sq units).
+[OK] Roadmap (ker) meets every association region (91 vertices, 16 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=1.
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=2.
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=3.
+  k=1 partition: [[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]
+  k=2 partition: [[0, 2, 5, 6, 11, 12, 13, 17, 30, 31], [18, 19, 24, 27, 29, 34, 35]]
+  k=3 partition: [[0, 5, 6, 11, 12, 30, 31], [2, 19, 24, 34, 35], [13, 17, 18, 27, 29]]
+  corner standoff for sampled configurations: 2.1 units
+  oracle k=1 m=1: s*=2.077  p95=1.285  mean=0.893  (300 configs, 33s)
+  oracle k=2 m=1: s*=1.110  p95=0.980  mean=0.695  (300 configs, 70s)
+  oracle k=3 m=1: s*=1.005  p95=0.907  mean=0.667  (300 configs, 110s)
+  oracle k=1 m=2: s*=21.042  p95=4.241  mean=1.984  (300 configs, 38s)
+  oracle k=2 m=2: s*=4.891  p95=2.674  mean=1.283  (300 configs, 80s)
+  oracle k=3 m=2: s*=6.961  p95=2.327  mean=1.223  (300 configs, 126s)
+  oracle k=1 m=3: s*=22.350  p95=6.095  mean=2.973  (300 configs, 44s)
+  oracle k=2 m=3: s*=9.010  p95=3.381  mean=1.794  (300 configs, 92s)
+  oracle k=3 m=3: s*=7.583  p95=3.634  mean=1.711  (300 configs, 144s)
+  trials 10/450 (99s)
+  trials 20/450 (112s)
+  trials 30/450 (180s)
+  trials 40/450 (226s)
+  trials 50/450 (247s)
+  trials 60/450 (329s)
+  trials 70/450 (357s)
+  trials 80/450 (418s)
+  trials 90/450 (485s)
+  trials 100/450 (508s)
+  trials 110/450 (610s)
+  trials 120/450 (631s)
+  trials 130/450 (713s)
+  trials 140/450 (774s)
+  trials 150/450 (798s)
+  trials 160/450 (880s)
+  trials 170/450 (906s)
+  trials 180/450 (980s)
+  trials 190/450 (1023s)
+  trials 200/450 (1045s)
+  trials 210/450 (1139s)
+  trials 220/450 (1183s)
+  trials 230/450 (1256s)
+  trials 240/450 (1313s)
+  trials 250/450 (1377s)
+  trials 260/450 (1442s)
+  trials 270/450 (1497s)
+  trials 280/450 (1557s)
+  trials 290/450 (1641s)
+  trials 300/450 (1690s)
+  trials 310/450 (1746s)
+  trials 320/450 (1809s)
+  trials 330/450 (1853s)
+  trials 340/450 (1918s)
+  trials 350/450 (1970s)
+  trials 360/450 (2046s)
+  trials 370/450 (2121s)
+  trials 380/450 (2175s)
+  trials 390/450 (2237s)
+  trials 400/450 (2313s)
+  trials 410/450 (2380s)
+  trials 420/450 (2457s)
+  trials 430/450 (2533s)
+  trials 440/450 (2586s)
+  trials 450/450 (2653s)
+
+Polygon   k  m  s*_(k,m)     p95    mean
+------------------------------------------
+poly9     1  1     2.077   1.285   0.893
+poly9     2  1     1.110   0.980   0.695
+poly9     3  1     1.005   0.907   0.667
+poly9     1  2    21.042   4.241   1.984
+poly9     2  2     4.891   2.674   1.283
+poly9     3  2     6.961   2.327   1.223
+poly9     1  3    22.350   6.095   2.973
+poly9     2  3     9.010   3.381   1.794
+poly9     3  3     7.583   3.634   1.711
+
+Polygon   k  m        mean α         α_max       %in view    N_breach    N_escape
+----------------------------------------------------------------------------------
+poly9     1  1     1.39±0.55     2.70±1.73   87.51±13.37%   0.00±0.00   0.94±1.24
+poly9     1  2     2.73±1.45     7.40±7.00   60.62±28.70%   0.02±0.14   2.42±1.26
+poly9     1  3     3.38±1.25     8.60±5.98   55.03±19.74%   0.02±0.14   4.44±1.57
+poly9     2  1     0.97±0.33     1.77±0.82   87.77±18.30%   0.00±0.00   0.80±1.03
+poly9     2  2     1.85±0.89     5.08±3.83   85.77±13.61%   0.02±0.14   1.50±1.30
+poly9     2  3     2.56±1.07     7.81±8.29   83.12±13.09%   0.02±0.14   2.70±1.71
+poly9     3  1     0.87±0.32     1.60±1.00   88.70±19.53%   0.00±0.00   0.58±1.03
+poly9     3  2     1.47±0.62     3.52±2.52   85.40±17.40%   0.02±0.14   1.34±1.48
+poly9     3  3     1.87±0.73     5.19±4.20   86.05±14.16%   0.02±0.14   1.70±1.72
+
+oracle: worst / p95 / mean team alpha over 300 sampled m-evader configurations (corner standoff as printed), L_c = min over evaders; trials: 50 seeds x 600 frames, s_p=0.8, s_e=1.0, skeleton evaders.
+
+[SAVED] /app/benchmark_results/20261121_173032_multi_evader.txt / .json

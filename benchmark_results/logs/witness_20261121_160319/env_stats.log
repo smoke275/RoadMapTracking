@@ -1,0 +1,133 @@
+Corners: [1, 2, 4, 5, 8, 11, 14, 15, 16, 19, 22, 25, 26, 27, 30, 33, 34, 35, 38, 41, 43, 44]
+KER coverage computed in 0.45s
+Total: 22 corners — [1, 2, 4, 5, 8, 11, 14, 15, 16, 19, 22, 25, 26, 27, 30, 33, 34, 35, 38, 41, 43, 44]
+[INFO] Guard set (witness ILP): 7/1534 candidates, 3 solve(s), 2 witness point(s).
+Set cover solved in 0.013s (7 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 387.91it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (146 vertices, 24 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 414 nodes, 406 edges
+poly1      48   22   1534    7   308    3996.1  100.0%
+Corners: [2, 3, 6, 7, 10, 11, 12, 14, 17, 18, 22, 23, 25, 28, 29, 32, 33, 34, 38, 39, 41, 44, 46]
+KER coverage computed in 0.80s
+Total: 23 corners — [2, 3, 6, 7, 10, 11, 12, 14, 17, 18, 22, 23, 25, 28, 29, 32, 33, 34, 38, 39, 41, 44, 46]
+[INFO] Guard set (witness ILP): 8/2249 candidates, 6 solve(s), 10 witness point(s).
+Set cover solved in 0.046s (8 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 410.23it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (223 vertices, 29 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 411 nodes, 391 edges
+poly2      47   23   2249    8   470    4733.4  100.0%
+Corners: [0, 1, 4, 8, 9, 12, 13, 16, 17, 20]
+KER coverage computed in 0.03s
+Total: 10 corners — [0, 1, 4, 8, 9, 12, 13, 16, 17, 20]
+[INFO] Guard set (witness ILP): 5/360 candidates, 1 solve(s), 0 witness point(s).
+Set cover solved in 0.003s (5 guards selected)
+  0%|          | 0/3 [00:00<?, ?it/s]100%|██████████| 3/3 [00:00<00:00, 718.37it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (45 vertices, 9 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 378 nodes, 352 edges
+poly3      23   10    360    5    94    2247.6  100.0%
+Corners: [1, 3, 6, 9, 13, 17, 19, 22, 25, 28, 30, 32, 33, 34, 38, 39, 40, 42, 44, 46]
+KER coverage computed in 0.85s
+Total: 20 corners — [1, 3, 6, 9, 13, 17, 19, 22, 25, 28, 30, 32, 33, 34, 38, 39, 40, 42, 44, 46]
+[INFO] Guard set (witness ILP): 5/2784 candidates, 2 solve(s), 4 witness point(s).
+Set cover solved in 0.021s (5 guards selected)
+  0%|          | 0/6 [00:00<?, ?it/s]100%|██████████| 6/6 [00:00<00:00, 400.00it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (99 vertices, 13 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 430 nodes, 407 edges
+poly4      47   20   2784    5   206    1674.5  100.0%
+Corners: [1, 3, 6, 9, 10, 11, 16, 17, 18, 21, 24, 25, 26, 29, 32, 33, 34]
+KER coverage computed in 0.25s
+Total: 17 corners — [1, 3, 6, 9, 10, 11, 16, 17, 18, 21, 24, 25, 26, 29, 32, 33, 34]
+[INFO] Guard set (witness ILP): 6/1135 candidates, 1 solve(s), 0 witness point(s).
+Set cover solved in 0.004s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 522.80it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (138 vertices, 23 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 411 nodes, 401 edges
+poly5      38   17   1135    6   294    5524.9  100.0%
+Corners: [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+KER coverage computed in 0.22s
+Total: 17 corners — [0, 1, 6, 7, 8, 12, 13, 14, 19, 20, 21, 24, 29, 30, 31, 35, 36]
+[INFO] Guard set (witness ILP): 6/996 candidates, 1 solve(s), 0 witness point(s).
+Set cover solved in 0.010s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 478.36it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (132 vertices, 23 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 403 nodes, 393 edges
+poly6      39   17    996    6   280    6426.2  100.0%
+Corners: [3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 28, 29]
+KER coverage computed in 0.07s
+Total: 12 corners — [3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 28, 29]
+[INFO] Guard set (witness ILP): 6/526 candidates, 1 solve(s), 0 witness point(s).
+Set cover solved in 0.003s (6 guards selected)
+  0%|          | 0/4 [00:00<?, ?it/s]100%|██████████| 4/4 [00:00<00:00, 628.78it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (90 vertices, 21 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 376 nodes, 352 edges
+poly7      30   12    526    6   194    5695.7  100.0%
+Corners: [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+KER coverage computed in 0.64s
+Total: 29 corners — [2, 6, 7, 8, 11, 12, 16, 17, 18, 21, 22, 26, 28, 29, 30, 33, 37, 38, 39, 43, 44, 48, 50, 51, 52, 53, 56, 57, 59]
+[INFO] Guard set (witness ILP): 14/1716 candidates, 4 solve(s), 11 witness point(s).
+Set cover solved in 0.036s (14 guards selected)
+  0%|          | 0/7 [00:00<?, ?it/s]100%|██████████| 7/7 [00:00<00:00, 303.41it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (385 vertices, 66 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 393 nodes, 379 edges
+poly8      60   29   1716   14   836    6889.0  100.0%
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.32s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] Guard set (witness ILP): 6/1477 candidates, 3 solve(s), 2 witness point(s).
+Set cover solved in 0.011s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 518.46it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 99.9970% of the environment (uncovered area 9.6087 sq units).
+[OK] Roadmap (ker) meets every association region (91 vertices, 16 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+poly9      39   17   1477    6   194    2687.4  100.0%
+
+Polygon     n  |C|    |K|  |S|   |E|    Length   %Area
+------------------------------------------------------
+poly1      48   22   1534    7   308    3996.1  100.0%
+poly2      47   23   2249    8   470    4733.4  100.0%
+poly3      23   10    360    5    94    2247.6  100.0%
+poly4      47   20   2784    5   206    1674.5  100.0%
+poly5      38   17   1135    6   294    5524.9  100.0%
+poly6      39   17    996    6   280    6426.2  100.0%
+poly7      30   12    526    6   194    5695.7  100.0%
+poly8      60   29   1716   14   836    6889.0  100.0%
+poly9      39   17   1477    6   194    2687.4  100.0%
+
+n, |C| after boundary cleaning; |K| KER candidates before domination pre-processing; |E| edges of the enriched patrol graph; Length = total patrol-path length; %Area = guard visibility coverage.
+
+[SAVED] /app/benchmark_results/20261121_160327_environments.txt

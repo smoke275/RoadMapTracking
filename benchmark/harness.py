@@ -1,4 +1,5 @@
 """Headless trial runner: no Qt window, no pygame, pure computation."""
+from skeleton import seed_evader_rng
 import csv
 import math
 import multiprocessing
@@ -81,6 +82,7 @@ def run_trial(data, seed: int, strategy: str = 'minmax-alpha',
               s_p: float = 0.8, s_e: float = 1.0) -> dict:
     """One simulation trial. Speeds are world units per frame (paper setup)."""
     random.seed(seed)
+    seed_evader_rng(seed)
 
     ev_start = get_random_point_in_polygon(data.shapely_env)
     evader = _make_evader(evader_model, data, (ev_start.x, ev_start.y),

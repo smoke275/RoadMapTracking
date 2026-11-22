@@ -1,0 +1,34 @@
+guard selection: witness  seeds=50 frames=600 workers=22
+2026-11-21 19:59:41 SKIP  bench_poly3 (already done)
+2026-11-21 19:59:41 SKIP  bench_kernel_poly3 (already done)
+2026-11-21 19:59:41 START bench_poly9
+2026-11-21 20:23:12 DONE  bench_poly9
+2026-11-21 20:23:12 START bench_kernel_poly9
+2026-11-21 20:24:05 DONE  bench_kernel_poly9
+2026-11-21 20:24:05 START multi_evader_poly9
+2026-11-21 21:14:07 DONE  multi_evader_poly9
+2026-11-21 21:14:07 START bench_poly7
+2026-11-21 21:29:40 DONE  bench_poly7
+2026-11-21 21:29:40 START bench_kernel_poly7
+2026-11-21 21:30:07 DONE  bench_kernel_poly7
+2026-11-21 21:30:07 START bench_poly4
+2026-11-21 21:54:55 DONE  bench_poly4
+2026-11-21 21:54:55 START bench_kernel_poly4
+2026-11-21 21:56:13 DONE  bench_kernel_poly4
+2026-11-21 21:56:13 START bench_poly6
+2026-11-21 22:24:07 DONE  bench_poly6
+2026-11-21 22:24:07 START bench_kernel_poly6
+2026-11-21 22:25:05 DONE  bench_kernel_poly6
+2026-11-21 22:25:05 START bench_poly5
+2026-11-21 22:54:01 DONE  bench_poly5
+2026-11-21 22:54:01 START bench_kernel_poly5
+2026-11-21 22:55:00 DONE  bench_kernel_poly5
+2026-11-21 22:55:00 START bench_poly1
+2026-11-21 23:32:35 DONE  bench_poly1
+2026-11-21 23:32:35 START bench_kernel_poly1
+2026-11-21 23:33:52 DONE  bench_kernel_poly1
+2026-11-21 23:33:52 SKIP  bench_poly2 (already done)
+2026-11-21 23:33:52 SKIP  bench_kernel_poly2 (already done)
+2026-11-21 23:33:52 SKIP  bench_poly8 (already done)
+2026-11-21 23:33:52 SKIP  bench_kernel_poly8 (already done)
+2026-11-21 23:33:52 ALL STAGES FINISHED

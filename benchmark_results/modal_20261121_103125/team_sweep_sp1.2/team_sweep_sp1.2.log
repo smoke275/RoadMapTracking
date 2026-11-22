@@ -1,0 +1,59 @@
+=== poly9 ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.89s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] Guard set (witness ILP): 6/1477 candidates, 3 solve(s), 2 witness point(s).
+Set cover solved in 0.037s (6 guards selected)
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+100%|██████████| 5/5 [00:00<00:00, 188.36it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 99.9970% of the environment (uncovered area 9.6087 sq units).
+[OK] Roadmap (ker) meets every association region (91 vertices, 16 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=1.
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=2.
+[GROUPS] affinity loaded from cache.
+[GROUPS] using stored ilp partition for k=3.
+  k=1 partition: [[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]
+  k=2 partition: [[0, 2, 5, 6, 11, 12, 13, 17, 30, 31], [18, 19, 24, 27, 29, 34, 35]]
+  k=3 partition: [[0, 5, 6, 11, 12, 30, 31], [2, 19, 24, 34, 35], [13, 17, 18, 27, 29]]
+  corner standoff for sampled configurations: 2.1 units
+  oracle k=1 m=1: s*=2.077  p95=1.226  mean=0.879  (50 configs, 20s)
+  oracle k=2 m=1: s*=0.988  p95=0.923  mean=0.656  (50 configs, 43s)
+  oracle k=3 m=1: s*=0.916  p95=0.901  mean=0.631  (50 configs, 68s)
+  trials 10/150 (241s)
+  trials 20/150 (473s)
+  trials 30/150 (489s)
+  trials 40/150 (714s)
+  trials 50/150 (949s)
+  trials 60/150 (996s)
+  trials 70/150 (1257s)
+  trials 80/150 (1285s)
+  trials 90/150 (1541s)
+  trials 100/150 (1802s)
+  trials 110/150 (1865s)
+  trials 120/150 (2163s)
+  trials 130/150 (2401s)
+  trials 140/150 (2485s)
+  trials 150/150 (2780s)
+
+Polygon   k  m  s*_(k,m)     p95    mean
+------------------------------------------
+poly9     1  1     2.077   1.226   0.879
+poly9     2  1     0.988   0.923   0.656
+poly9     3  1     0.916   0.901   0.631
+
+Polygon   k  m        mean α         α_max       %in view    N_breach    N_escape
+----------------------------------------------------------------------------------
+poly9     1  1     1.17±0.35     2.10±1.11   88.27±14.04%   0.00±0.00   0.96±1.37
+poly9     2  1     0.87±0.25     1.53±0.71   88.58±18.31%   0.00±0.00   0.72±0.93
+poly9     3  1     0.78±0.19     1.22±0.64   87.86±20.34%   0.00±0.00   0.56±0.97
+
+oracle: worst / p95 / mean team alpha over 50 sampled m-evader configurations (corner standoff as printed), L_c = min over evaders; trials: 50 seeds x 600 frames, s_p=1.2, s_e=1.0, skeleton evaders.
+
+[SAVED] /app/benchmark_results/20261121_191908_multi_evader.txt / .json

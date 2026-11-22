@@ -27,6 +27,7 @@ Run:  python run_multi_evader.py --polygons poly9 --k 1 2 3 --m 1 2 3
 Outputs benchmark_results/<stamp>_multi_evader.{txt,json}; plot with
 plot_multi_evader.py.
 """
+from skeleton import seed_evader_rng
 import argparse
 import json
 import math
@@ -107,6 +108,7 @@ def _init(data, groups_by_k):
 def run_trial(data, groups: list, m: int, seed: int, frames: int,
               s_p: float, s_e: float) -> dict:
     random.seed(seed)
+    seed_evader_rng(seed)
     evs = [get_random_point_in_polygon(data.shapely_env) for _ in range(m)]
     agents = [SkeletonEvader(data.skel_nodes, data.skel_adj, data.shapely_env,
                              (p.x, p.y), s_e, avoid_recent=3) for p in evs]

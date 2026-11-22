@@ -244,7 +244,10 @@ class Grouping:
 def _cache_key(data, grid_n, step):
     # 'exact' tags the vertex-only V(e, c) computation; `step` no longer
     # influences the affinity (kept in the signature for callers).
-    return (poly_fingerprint(data.poly), int(grid_n), 'exact')
+    # The guard set fixes the roadmap, so it is part of the key: partitions
+    # computed for another guard selection must not be reused.
+    guards = tuple(sorted((round(x, 3), round(y, 3)) for x, y in data.guards))
+    return (poly_fingerprint(data.poly), int(grid_n), 'exact', guards)
 
 
 def _load_cache() -> dict:
@@ -272,7 +275,7 @@ def get_affinity(data, grid_n: int, step: float, force: bool = False,
     polygon and parameters match."""
     key = _cache_key(data, grid_n, step)
     blob = _load_cache()
-    if not force and key in blob:
+    if not force and 'affinity' in blob.get(key, {}):
         print('[GROUPS] affinity loaded from cache.')
         return blob[key]['affinity'], blob[key]['road_dist']
     aff = corner_affinity(data, grid_n, step, progress=progress)

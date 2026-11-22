@@ -1,0 +1,96 @@
+=== poly9 ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.31s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] Guard set (witness ILP): 6/1477 candidates, 3 solve(s), 2 witness point(s).
+Set cover solved in 0.011s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 510.22it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 99.9970% of the environment (uncovered area 9.6087 sq units).
+[OK] Roadmap (ker) meets every association region (91 vertices, 16 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  fine grid: 286 interior points (6s)
+  [ILP] grid 33 evader pts, 238 candidate positions, 17 corners, k=1; setup 4.5s
+  [ILP] k=1: bisection on the speed bound
+  [ILP]   t=23.217: feasible (0.0s)
+  [ILP]   t=11.609: feasible (0.0s)
+  [ILP]   t=5.804: feasible (0.0s)
+  [ILP]   t=2.902: feasible (0.0s)
+  [ILP]   t=1.451: infeasible (0.0s)
+  [ILP]   t=2.177: feasible (0.0s)
+  [ILP]   t=1.814: feasible (0.0s)
+  [ILP]   t=1.632: feasible (0.0s)
+  [ILP]   t=1.542: feasible (0.0s)
+  [ILP]   t=1.496: infeasible (0.0s)
+  [ILP]   t=1.519: feasible (0.0s)
+  [ILP]   t=1.508: feasible (0.0s)
+  [ILP]   t=1.502: feasible (0.0s)
+  [ILP]   t=1.499: infeasible (0.0s)
+  [ILP] min feasible bound 1.502; maximising sight at that bound
+  [ILP] optimum: s_k=1.501  Lambda=0.726  groups=[[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]  (0.0s)
+  [ILP] bound +10%: s_k=1.501  Lambda=0.730  groups=[[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]  (0.0s)
+  k=1 ILP min-speed: s*=2.195 (fine grid)  Lambda=0.726  groups=[[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]
+  k=1 ILP bound +10%: s*=2.195 (fine grid)  Lambda=0.730  groups=[[0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]]
+  stored ILP partition for k=1; the GUI will use it.
+  k=1 done in 56s
+  [ILP] grid 33 evader pts, 238 candidate positions, 17 corners, k=2; setup 4.5s
+  [ILP] k=2: bisection on the speed bound
+  [ILP]   t=23.217: feasible (0.1s)
+  [ILP]   t=11.609: feasible (0.1s)
+  [ILP]   t=5.804: feasible (0.1s)
+  [ILP]   t=2.902: feasible (0.1s)
+  [ILP]   t=1.451: feasible (0.2s)
+  [ILP]   t=0.726: infeasible (0.2s)
+  [ILP]   t=1.088: feasible (0.2s)
+  [ILP]   t=0.907: infeasible (0.2s)
+  [ILP]   t=0.998: infeasible (0.2s)
+  [ILP]   t=1.043: feasible (0.2s)
+  [ILP]   t=1.020: feasible (0.2s)
+  [ILP]   t=1.009: feasible (0.2s)
+  [ILP]   t=1.003: infeasible (0.2s)
+  [ILP]   t=1.006: feasible (0.2s)
+  [ILP] min feasible bound 1.006; maximising sight at that bound
+  [ILP] optimum: s_k=1.004  Lambda=0.742  groups=[[0, 2, 5, 6, 11, 12, 13, 17, 30, 31], [18, 19, 24, 27, 29, 34, 35]]  (0.3s)
+  [ILP] bound +10%: s_k=1.029  Lambda=0.783  groups=[[0, 2, 5, 11, 19, 24, 30, 31, 35], [6, 12, 13, 17, 18, 27, 29, 34]]  (0.6s)
+  k=2 ILP min-speed: s*=1.118 (fine grid)  Lambda=0.742  groups=[[0, 2, 5, 6, 11, 12, 13, 17, 30, 31], [18, 19, 24, 27, 29, 34, 35]]
+  k=2 ILP bound +10%: s*=1.042 (fine grid)  Lambda=0.783  groups=[[0, 2, 5, 11, 19, 24, 30, 31, 35], [6, 12, 13, 17, 18, 27, 29, 34]]
+  stored ILP partition for k=2; the GUI will use it.
+  k=2 done in 67s
+  [ILP] grid 33 evader pts, 238 candidate positions, 17 corners, k=3; setup 4.5s
+  [ILP] k=3: bisection on the speed bound
+  [ILP]   t=23.217: feasible (0.1s)
+  [ILP]   t=11.609: feasible (0.1s)
+  [ILP]   t=5.804: feasible (0.1s)
+  [ILP]   t=2.902: feasible (0.1s)
+  [ILP]   t=1.451: feasible (0.1s)
+  [ILP]   t=0.726: infeasible (0.4s)
+  [ILP]   t=1.088: feasible (0.2s)
+  [ILP]   t=0.907: infeasible (0.9s)
+  [ILP]   t=0.998: feasible (0.4s)
+  [ILP]   t=0.952: feasible (0.9s)
+  [ILP]   t=0.930: infeasible (0.9s)
+  [ILP]   t=0.941: infeasible (0.7s)
+  [ILP]   t=0.947: feasible (0.9s)
+  [ILP]   t=0.944: infeasible (0.7s)
+  [ILP] min feasible bound 0.947; maximising sight at that bound
+  [ILP] optimum: s_k=0.944  Lambda=0.770  groups=[[0, 5, 6, 11, 12, 30, 31], [2, 19, 24, 34, 35], [13, 17, 18, 27, 29]]  (3.6s)
+  [ILP] bound +10%: s_k=1.025  Lambda=0.822  groups=[[0, 2, 5, 6, 11, 12, 30, 31, 35], [19, 24, 34], [13, 17, 18, 27, 29]]  (3.2s)
+  k=3 ILP min-speed: s*=1.021 (fine grid)  Lambda=0.770  groups=[[0, 5, 6, 11, 12, 30, 31], [2, 19, 24, 34, 35], [13, 17, 18, 27, 29]]
+  k=3 ILP bound +10%: s*=1.021 (fine grid)  Lambda=0.822  groups=[[0, 2, 5, 6, 11, 12, 30, 31, 35], [19, 24, 34], [13, 17, 18, 27, 29]]
+  stored ILP partition for k=3; the GUI will use it.
+  k=3 done in 83s
+
+Polygon   k Method                s*_k  Lambda   groups (per-group worst alpha)
+-------------------------------------------------------------------------------
+poly9     1 ILP min-speed        2.195   0.726   [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35] (2.19)
+poly9     1 ILP bound +10%       2.195   0.730   [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35] (2.19)
+poly9     2 ILP min-speed        1.118   0.742   [0, 2, 5, 6, 11, 12, 13, 17, 30, 31] (1.00)  [18, 19, 24, 27, 29, 34, 35] (1.12)
+poly9     2 ILP bound +10%       1.042   0.783   [0, 2, 5, 11, 19, 24, 30, 31, 35] (1.04)  [6, 12, 13, 17, 18, 27, 29, 34] (1.02)
+poly9     3 ILP min-speed        1.021   0.770   [0, 5, 6, 11, 12, 30, 31] (0.90)  [2, 19, 24, 34, 35] (1.02)  [13, 17, 18, 27, 29] (1.02)
+poly9     3 ILP bound +10%       1.021   0.822   [0, 2, 5, 6, 11, 12, 30, 31, 35] (1.01)  [19, 24, 34] (0.78)  [13, 17, 18, 27, 29] (1.02)
+
+s*_k: max over a 25x25 evader grid of the k-pursuer alpha (max over groups of that group's optimal alpha); evader speed = 1, zero-transit pursuers. Lambda: nearness-weighted fraction of (evader position, corner) pairs whose pursuer keeps line of sight for the whole escape from its chosen position (ILP grid 8x8, positions every 15.0 units).
+
+[SAVED] /app/benchmark_results/20261121_161436_groups.txt
