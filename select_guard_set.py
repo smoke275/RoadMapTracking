@@ -24,6 +24,13 @@ from multiprocessing import Pool
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
+def _silence():
+    """Pool initializer: send the workers' file descriptor 1 to /dev/null.
+    VisiLibity prints its search trace from C++, which a Python-level redirect
+    does not catch and which fills the stage log with hundreds of megabytes."""
+    os.dup2(os.open(os.devnull, os.O_WRONLY), 1)
+
+
 def _evaluate(task):
     name, sample, grid = task
     import ker_pipeline
@@ -72,7 +79,7 @@ def main():
              f'{"Polygon":<8} {"Guards":>6} {"Valid":>5} {"Distinct":>8} {"witness s*":>10} '
              f'{"best s*":>8} {"median":>7} {"worst":>7} {"best sample":>11}',
              '-' * 80]
-    with Pool(args.workers) as pool:
+    with Pool(args.workers, initializer=_silence) as pool:
         for name in polygons:
             t0 = time.time()
             tasks = [(name, s, args.grid) for s in range(args.samples + 1)]
