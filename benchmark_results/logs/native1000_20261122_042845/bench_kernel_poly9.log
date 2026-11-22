@@ -1,0 +1,22 @@
+=== poly9 (22 workers, roadmap=ker) ===
+Corners: [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+KER coverage computed in 0.32s
+Total: 17 corners — [0, 2, 5, 6, 11, 12, 13, 17, 18, 19, 24, 27, 29, 30, 31, 34, 35]
+[INFO] Guard set: 6 stored guards (minimum set with the smallest critical speed ratio).
+Set cover solved in 0.000s (6 guards selected)
+  0%|          | 0/5 [00:00<?, ?it/s]100%|██████████| 5/5 [00:00<00:00, 506.91it/s]
+[INFO] Geodesic graph built.
+[OK] Coverage sanity check passed: guard set covers 100.0000% of the environment (uncovered area 0.0000 sq units).
+[OK] Roadmap (ker) meets every association region (94 vertices, 16 segments).
+[CACHE] Saved.
+[SKEL] Building Voronoi skeleton…
+[SKEL] 419 nodes, 408 edges
+  [poly9 | kernel-control | skeleton] 25/50 trials  (2s elapsed, ~2s remaining, 22 workers)
+  [poly9 | kernel-control | skeleton] 50/50 trials  (2s elapsed, ~0s remaining, 22 workers)
+
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly9        Kernel-Weighted Control (Mandal & Bhattacharya, ICRA25) Skeleton Evader         2.28±1.18    5.00±3.43 80.75±25.62%     0.0±0.0     0.7±0.7
+
+[SAVED] /app/benchmark_results/20261122_043944_table.txt
+[SAVED] /app/benchmark_results/20261122_043944_raw.csv

@@ -30,3 +30,5 @@ guard selection: witness-minspeed native core samples=1000  seeds=50 frames=600 
 2026-11-22 04:39:23 START bench_poly9
 2026-11-22 04:39:40 DONE  bench_poly9
 2026-11-22 04:39:40 START bench_kernel_poly9
+2026-11-22 04:39:44 DONE  bench_kernel_poly9
+2026-11-22 04:39:44 START multi_evader_poly9
