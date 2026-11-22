@@ -14,8 +14,9 @@ FRAMES=${FRAMES:-600}
 WORKERS=${WORKERS:-22}
 SAMPLES=${SAMPLES:-100}
 POLYS="poly1 poly2 poly3 poly4 poly5 poly6 poly7 poly8 poly9"
+PREFIX=${PREFIX:-native}
 STAMP=$(date +%Y%m%d_%H%M%S)
-LOGDIR=benchmark_results/logs/native_$STAMP
+LOGDIR=benchmark_results/logs/${PREFIX}_$STAMP
 mkdir -p "$LOGDIR"
 STATUS=$LOGDIR/status.txt
 bash native/build.sh > "$LOGDIR/build.log" 2>&1 || { echo "native build failed" | tee "$LOGDIR/status.txt"; exit 1; }
@@ -23,7 +24,7 @@ echo "guard selection: witness-minspeed native core samples=$SAMPLES  seeds=$SEE
 
 run() {   # run <name> <cmd...>
   local name=$1; shift
-  if grep -qs "DONE  $name\$" benchmark_results/logs/native_*/status.txt; then
+  if grep -qs "DONE  $name\$" benchmark_results/logs/${PREFIX}_*/status.txt; then
     echo "$(date '+%F %T') SKIP  $name (already done)" | tee -a "$STATUS"; return
   fi
   echo "$(date '+%F %T') START $name" | tee -a "$STATUS"

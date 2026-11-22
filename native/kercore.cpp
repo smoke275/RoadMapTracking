@@ -65,9 +65,10 @@ struct Ker {
     return true;
   }
 
-  // min over x in [0, len] of max_c min(d1_c + x, d2_c + len - x) / L_c
-  double edgeMin(int e, const double* L, const unsigned char* mask, double* xbest,
-                 std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& w) const {
+  // Collect the tents of edge e: f_c(x) = min(a1_c + x, a2_c - x) * w_c on
+  // [0, len], with a1 = d_u, a2 = d_v + len, w = 1 / L_c. Returns their number.
+  int tents(int e, const double* L, const unsigned char* mask,
+            std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& w) const {
     double len = el[e];
     int m = 0;
     if (len >= 1e-9)
@@ -77,21 +78,96 @@ struct Ker {
         if (!(d1 < INF && d2 < INF)) continue;      // vertex cannot reach the region
         a1[m] = d1; a2[m] = d2 + len; w[m] = 1.0 / L[c]; m++;
       }
+    return m;
+  }
+
+  static double envelope(int m, const double* a1, const double* a2, const double* w, double x) {
+    double v = -INF;
+    for (int c = 0; c < m; c++) v = std::max(v, std::min(a1[c] + x, a2[c] - x) * w[c]);
+    return v;
+  }
+
+  // Reference method: evaluate the envelope at every point where a decreasing
+  // piece of one corner meets an increasing piece of another. O(m^3).
+  double edgeMinPairs(int e, const double* L, const unsigned char* mask, double* xbest,
+                      std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& w) const {
+    double len = el[e];
+    int m = tents(e, L, mask, a1, a2, w);
     if (m == 0) { *xbest = 0.0; return 0.0; }       // same convention as the Python code
-    auto h = [&](double x) {
-      double v = -INF;
-      for (int c = 0; c < m; c++) v = std::max(v, std::min(a1[c] + x, a2[c] - x) * w[c]);
-      return v;
-    };
-    double hb = h(0.0), xb = 0.0, hl = h(len);
+    double hb = envelope(m, a1.data(), a2.data(), w.data(), 0.0), xb = 0.0;
+    double hl = envelope(m, a1.data(), a2.data(), w.data(), len);
     if (hl < hb) { hb = hl; xb = len; }
-    // An interior local minimum of the envelope is a point where a decreasing
-    // piece of one corner meets an increasing piece of another.
     for (int i = 0; i < m; i++)
       for (int j = 0; j < m; j++) {
         double x = (a2[j] * w[j] - a1[i] * w[i]) / (w[i] + w[j]);
-        if (x > 0.0 && x < len) { double v = h(x); if (v < hb) { hb = v; xb = x; } }
+        if (x > 0.0 && x < len) {
+          double v = envelope(m, a1.data(), a2.data(), w.data(), x);
+          if (v < hb) { hb = v; xb = x; }
+        }
       }
+    *xbest = xb;
+    return hb;
+  }
+
+  // Method of the paper (Section V): the breakpoints of the tents divide
+  // [0, len] into subintervals on which every f_c is affine. On a subinterval
+  // the envelope is the maximum of m lines, which is convex. Its pieces are
+  // the lines on the upper envelope, found as the lower convex hull of the
+  // dual points (slope, -intercept) after sorting by slope. The minimum over
+  // the subinterval is at the hull vertex where the slope changes sign, or at
+  // an endpoint. O(m log m) per subinterval, O(m^2 log m) per edge.
+  double edgeMin(int e, const double* L, const unsigned char* mask, double* xbest,
+                 std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& w) const {
+    double len = el[e];
+    int m = tents(e, L, mask, a1, a2, w);
+    if (m == 0) { *xbest = 0.0; return 0.0; }       // same convention as the Python code
+    const double *A1 = a1.data(), *A2 = a2.data(), *W = w.data();
+    std::vector<double> bp(m), cuts;
+    for (int c = 0; c < m; c++) {
+      bp[c] = std::max(0.0, std::min(len, (A2[c] - A1[c]) / 2.0));
+      if (bp[c] > 0.0 && bp[c] < len) cuts.push_back(bp[c]);
+    }
+    std::sort(cuts.begin(), cuts.end());
+    double hb = envelope(m, A1, A2, W, 0.0), xb = 0.0;
+    double hl = envelope(m, A1, A2, W, len);
+    if (hl < hb) { hb = hl; xb = len; }
+    struct Ln { double s, t; int c; };              // y = s x + t, piece of corner c
+    std::vector<Ln> ln(m), hull(m);
+    for (size_t k = 0; k <= cuts.size(); k++) {
+      double lo = k ? cuts[k - 1] : 0.0, hi = k < cuts.size() ? cuts[k] : len;
+      if (!(lo < hi)) continue;
+      for (int c = 0; c < m; c++)
+        ln[c] = bp[c] <= lo ? Ln{-W[c], A2[c] * W[c], c} : Ln{W[c], A1[c] * W[c], c};
+      std::sort(ln.begin(), ln.end(), [](const Ln& p, const Ln& q) {
+        return p.s < q.s || (p.s == q.s && p.t > q.t);
+      });
+      int hs = 0;
+      for (int i = 0; i < m; i++) {
+        if (hs && hull[hs - 1].s == ln[i].s) continue;          // parallel, lower intercept
+        // drop the last hull line while it is nowhere above both neighbors
+        while (hs >= 2) {
+          const Ln &p = hull[hs - 2], &q = hull[hs - 1], &r = ln[i];
+          if ((p.t - r.t) * (q.s - p.s) <= (p.t - q.t) * (r.s - p.s)) hs--; else break;
+        }
+        hull[hs++] = ln[i];
+      }
+      // hull lines are in increasing slope order; the minimum of the envelope
+      // is where a line of negative slope meets a line of positive slope
+      int j = -1, i = -1;
+      for (int q = 0; q < hs; q++) { if (hull[q].s < 0) j = q; else if (i < 0) i = q; }
+      if (j >= 0 && i >= 0) {
+        int ci = hull[i].c, cj = hull[j].c;
+        double x = (A2[cj] * W[cj] - A1[ci] * W[ci]) / (W[ci] + W[cj]);
+        if (x > lo && x < hi && x > 0.0 && x < len) {
+          double v = envelope(m, A1, A2, W, x);
+          if (v < hb) { hb = v; xb = x; }
+        }
+      }
+      if (hi < len) {                                // interior cut: both sides evaluate it once
+        double v = envelope(m, A1, A2, W, hi);
+        if (v < hb) { hb = v; xb = hi; }
+      }
+    }
     *xbest = xb;
     return hb;
   }
@@ -239,6 +315,23 @@ int ker_shortest_path(void* h, double ax, double ay, double bx, double by, doubl
   if ((int)path.size() > cap) return -1;
   for (size_t i = 0; i < path.size(); i++) { out[2 * i] = path[i].x; out[2 * i + 1] = path[i].y; }
   return (int)path.size();
+}
+
+// Self-check: number of edges on which the method of the paper and the
+// reference method return different bits for the minimum or its position.
+int ker_compare_methods(void* h, const double* L, const unsigned char* mask, double* maxdiff) {
+  const Ker& k = *static_cast<Ker*>(h);
+  std::vector<double> a1(k.nc), a2(k.nc), w(k.nc);
+  int bad = 0; double md = 0.0;
+  for (int e = 0; e < k.ne; e++) {
+    double x1, x2;
+    double v1 = k.edgeMin(e, L, mask, &x1, a1, a2, w);
+    double v2 = k.edgeMinPairs(e, L, mask, &x2, a1, a2, w);
+    if (v1 != v2 || x1 != x2) bad++;
+    md = std::max(md, std::max(std::fabs(v1 - v2), std::fabs(x1 - x2)));
+  }
+  *maxdiff = md;
+  return bad;
 }
 
 }  // extern "C"

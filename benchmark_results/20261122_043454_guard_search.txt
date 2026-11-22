@@ -1,0 +1,6 @@
+# samples=1000 (plus the plain witness selection) grid=25
+Polygon  Guards Valid Distinct witness s*  best s*  median   worst best sample
+--------------------------------------------------------------------------------
+poly6         6  1001      384      2.549    2.120   2.492   2.769         271
+
+witness s*: the set returned by the plain witness selection. best/median/worst: over the valid samples (minimum number of guards, coverage not below the plain selection). The best set is stored in resources/guard_sets.json.
