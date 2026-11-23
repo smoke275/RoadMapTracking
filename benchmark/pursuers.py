@@ -314,7 +314,11 @@ class WatchmanPatrolPursuer:
         return px, py
 
 
+from benchmark.ampe_pursuer import AmpeFreePursuer, AmpeRoadmapPursuer   # noqa: E402
+
 PURSUER_CLASSES = {
+    'ampe-roadmap': AmpeRoadmapPursuer,
+    'ampe-free': AmpeFreePursuer,
     'minmax-alpha': MinMaxAlphaPursuer,
     'minmax-alpha-vis': MinMaxAlphaVisPursuer,
     'kernel-control': KernelWeightedPursuer,

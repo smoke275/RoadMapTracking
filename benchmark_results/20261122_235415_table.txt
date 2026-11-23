@@ -1,0 +1,5 @@
+# polygons=['poly1'] strategies=['ampe-roadmap', 'ampe-free'] evaders=['skeleton'] seeds=50 frames=600 sp=0.8 se=1.0 workers=22 sequential=False roadmap=None
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly1        ampe-roadmap                 Skeleton Evader         4.41±2.61    9.00±5.43 56.75±31.91%     0.0±0.0     1.1±0.8
+poly1        ampe-free                    Skeleton Evader         5.07±2.54  13.66±13.22 45.57±26.27%     0.0±0.0     1.8±1.1

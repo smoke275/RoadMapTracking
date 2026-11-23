@@ -24,10 +24,17 @@ DISPLAY = os.environ.get('DISPLAY', ':1')
 SHOTS = {
     'full': [(0, 'overview'), (10, 'drone'), (24, 'spot'), (36, 'drone_wide'), (52, 'overview')],
     'drone': [(0, 'overview'), (4, 'drone')],
+    # low side views of both robots, for the platform figure of the paper
+    'platforms': [(0, 'overview'), (3, 'drone_side'), (15, 'drone_level'), (27, 'drone_far'), (39, 'spot_side')],
+    'platforms_low': [(0, 'overview'), (3, 'drone_below_a'), (15, 'drone_below_b'), (27, 'drone_below_c')],
 }
 # camera presets: overview pose (x, y, z, pitch, yaw); follow offsets (target frame)
 OVERVIEW = (0.0, -30.0, 36.0, 0.9, 1.5708)
-OFFSETS = {'drone': (-6.0, -6.0, 3.5), 'drone_wide': (-12.0, -10.0, 9.0), 'spot': (-3.2, -3.2, 1.6)}
+OFFSETS = {'drone': (-6.0, -6.0, 3.5), 'drone_wide': (-12.0, -10.0, 9.0), 'spot': (-3.2, -3.2, 1.6),
+           'drone_side': (-7.0, -3.0, 1.0), 'drone_level': (-5.0, -5.0, 0.3), 'drone_far': (-9.0, 0.0, 1.6),
+           'spot_side': (-3.0, -1.5, 0.5),
+           # from below the drone (it cruises under the wall tops), floor in view
+           'drone_below_a': (-4.5, -2.5, -0.8), 'drone_below_b': (-3.0, 3.5, -0.7), 'drone_below_c': (4.0, -3.0, -0.9)}
 
 
 def sh(cmd, check=False):
@@ -63,8 +70,8 @@ def shot(kind):
         return move_to(*OVERVIEW)
     if kind.startswith('drone'):
         return follow('simple_drone', OFFSETS[kind])
-    if kind == 'spot':
-        return follow('spot_evader', OFFSETS['spot'])
+    if kind.startswith('spot'):
+        return follow('spot_evader', OFFSETS[kind])
 
 
 def window_ids():

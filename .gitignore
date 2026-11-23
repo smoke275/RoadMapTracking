@@ -29,3 +29,10 @@ benchmark_results/logs/
 benchmark_results/modal_*/**/*.log
 native/*.so
 video/out/*.mbtree
+
+# Minimax baseline: built files and solved tables
+baselines/ampe/ampe_poly
+baselines/ampe/Minmax_patched.hpp
+baselines/ampe/utils.hpp
+baselines/ampe/quasirand.hpp
+resources/ampe/
