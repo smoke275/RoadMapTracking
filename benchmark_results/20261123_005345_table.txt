@@ -1,0 +1,9 @@
+# polygons=['poly7'] strategies=['minmax-alpha', 'minmax-alpha-vis', 'geo-follow', 'greedy-los', 'ampe-roadmap', 'ampe-free'] evaders=['skeleton'] seeds=50 frames=600 sp=1.5 se=1.0 workers=22 sequential=False roadmap=None
+Environment  Strategy                     Evader                          ᾱ        α_max         %LOS   N_breach   N_escape
+---------------------------------------------------------------------------------------------------------------------------
+poly7        Min-Max α-Guard (Proposed)   Skeleton Evader         1.65±0.79    3.61±3.71 83.04±30.28%     0.0±0.1     0.6±0.8
+poly7        Min-Max +Vis Slack (Proposed) Skeleton Evader         1.65±0.78    3.61±3.71 94.30±11.51%     0.0±0.1     0.4±0.8
+poly7        Geo-Follow                   Skeleton Evader         1.75±0.79    3.23±2.70  97.22±5.26%     0.0±0.1     0.2±0.4
+poly7        Greedy-LOS                   Skeleton Evader         1.75±0.79    3.23±2.70  97.22±5.26%     0.0±0.1     0.2±0.4
+poly7        ampe-roadmap                 Skeleton Evader         2.14±1.08    5.36±6.24 88.45±22.10%     0.0±0.0     0.6±1.2
+poly7        ampe-free                    Skeleton Evader         1.54±0.33    3.48±6.84 100.00±0.00%     0.0±0.1     0.0±0.0
